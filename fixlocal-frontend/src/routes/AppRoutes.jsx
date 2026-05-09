@@ -57,7 +57,7 @@ function AppRoutesContent() {
     <div className="app-shell-bg min-h-screen bg-slate-50">
       <Navbar onToggleSidebar={toggleSidebar} />
       <Sidebar open={sidebarOpen} onClose={closeSidebar} />
-      <div className="animate-fade-in-up mx-auto w-full max-w-[1400px] px-3 pb-12 pt-6 md:px-5">
+      <div className="animate-fade-in-up mx-auto w-full max-w-[1600px] px-3 pb-10 pt-4 sm:px-4 sm:pb-12 sm:pt-6 md:px-6 xl:px-8 2xl:px-10">
         {children}
       </div>
       <Footer />

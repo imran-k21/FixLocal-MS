@@ -7,7 +7,7 @@ function ConversationPanel({ conversations = [], onSelect, activeConversationId 
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow border border-slate-100 p-4 space-y-3">
+    <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-3 shadow sm:p-4">
       <div>
         <h3 className="text-lg font-semibold">Conversations</h3>
         <input

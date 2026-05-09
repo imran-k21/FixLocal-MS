@@ -146,12 +146,12 @@ function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center py-12 animate-fade-in-up">
-      <div className="glass-panel-strong animated-outline hover-tilt w-full max-w-2xl rounded-3xl p-8 shadow-2xl">
+    <div className="animate-fade-in-up flex items-center justify-center px-1 py-6 sm:px-2 sm:py-10 md:py-12">
+      <div className="glass-panel-strong animated-outline hover-tilt w-full max-w-2xl rounded-2xl p-4 shadow-2xl sm:rounded-3xl sm:p-8">
         <h1 className="mb-2 text-center text-3xl font-bold text-gradient-fire">Create your account</h1>
         <p className="mb-6 text-center text-sm text-slate-600">Join FixLocal to book or offer trusted local services.</p>
         {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
+        <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <input
             name="name"
             value={form.name}
@@ -300,7 +300,7 @@ function Register() {
           </div>
         </form>
       </div>
-      </div>
+    </div>
   );
 }
 

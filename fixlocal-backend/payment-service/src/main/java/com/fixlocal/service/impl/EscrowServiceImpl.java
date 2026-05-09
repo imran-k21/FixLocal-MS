@@ -141,10 +141,9 @@ public class EscrowServiceImpl implements EscrowService {
             throw new PaymentException(ErrorCode.PAYMENT_ALREADY_REFUNDED);
         }
 
-        if (booking.getPaymentStatus() != PaymentStatus.AUTHORIZED
-                && booking.getPaymentStatus() != PaymentStatus.CAPTURED) {
+        if (booking.getPaymentStatus() != PaymentStatus.CAPTURED) {
             throw new PaymentException(ErrorCode.PAYMENT_STATUS_INVALID,
-                    "Only authorized or captured payments can be refunded");
+                    "Only captured payments can be refunded");
         }
 
         String paymentId = extractPaymentId(booking.getPaymentIntentId());

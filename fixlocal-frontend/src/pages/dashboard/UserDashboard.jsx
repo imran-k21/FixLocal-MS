@@ -15,8 +15,8 @@ import MyDisputesPanel from "../../components/MyDisputesPanel";
 function BookingDetailModal({ booking, onClose }) {
   if (!booking) return null;
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl sm:p-6">
         <h2 className="text-2xl font-bold mb-4">Booking Details</h2>
         <p className="text-sm text-slate-500 mb-2">Service</p>
         <p className="text-lg font-semibold mb-4">{booking.serviceDescription}</p>
@@ -44,8 +44,8 @@ function RatingModal({
   if (!booking) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3">
+      <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-4 shadow-xl sm:p-6">
         <div>
           <p className="text-xs uppercase text-slate-500">Rate booking</p>
           <h3 className="text-xl font-semibold text-slate-900">
@@ -86,16 +86,16 @@ function RatingModal({
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
           <button
-            className="px-4 py-2 text-sm rounded-lg border border-slate-200"
+            className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm sm:w-auto"
             onClick={onClose}
             disabled={submitting}
           >
             Cancel
           </button>
           <button
-            className="px-4 py-2 text-sm rounded-lg bg-amber-500 text-white disabled:opacity-70"
+            className="w-full rounded-lg bg-amber-500 px-4 py-2 text-sm text-white disabled:opacity-70 sm:w-auto"
             onClick={onSubmit}
             disabled={submitting}
           >
@@ -497,7 +497,7 @@ function UserDashboard() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {actionNotice && <p className="text-sm text-blue-600 mb-4">{actionNotice}</p>}
       {summaryError && <p className="text-sm text-red-500 mb-4">{summaryError}</p>}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {(summaryLoading ? [1, 2, 3, 4] : summary ? [
           { label: "Upcoming", value: summary.upcomingBookings },
           { label: "Active", value: summary.activeBookings },
@@ -520,7 +520,7 @@ function UserDashboard() {
       {loading ? (
         <p className="text-slate-600">Loading bookings...</p>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 grid gap-4">
             {bookings.map((booking) => {
               const latestOffer = getLatestOpenOffer(booking);
@@ -590,13 +590,13 @@ function UserDashboard() {
               <div className="flex flex-col gap-2">
                 <Link
                   to="/dashboard/current"
-                  className="rounded-lg bg-blue-600 text-white text-center px-4 py-2 text-sm font-semibold"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white"
                 >
                   View current booking
                 </Link>
                 <Link
                   to="/dashboard/history"
-                  className="rounded-lg border border-slate-200 text-center px-4 py-2 text-sm font-semibold text-slate-700"
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700"
                 >
                   Browse history
                 </Link>

@@ -36,6 +36,7 @@ function BookingCard({
   onDispute,
   onDownloadReceipt,
   receiptDownloading = false,
+  extraContent,
 }) {
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [disputeLoading, setDisputeLoading] = useState(false);
@@ -80,16 +81,16 @@ function BookingCard({
   const hasRating = typeof booking.userRating === "number";
 
   return (
-    <div className="bg-white shadow rounded-2xl p-4 border border-slate-100 space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
+    <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-4 shadow sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs uppercase text-slate-500">Service</p>
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="text-base font-semibold text-slate-900 sm:text-lg">
             {booking.serviceDescription}
           </h3>
-          <p className="text-xs text-slate-500 mt-1">{booking.serviceAddress}</p>
+          <p className="mt-1 text-xs text-slate-500">{booking.serviceAddress}</p>
         </div>
-        <span className="text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+        <span className="inline-flex w-fit shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-600">
           {booking.status?.replace("_", " ")}
         </span>
       </div>
@@ -102,7 +103,7 @@ function BookingCard({
         <p className="text-xs text-blue-600 font-medium">Quoted by tradesperson</p>
       )}
       {canQuotePrice && (
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="text-xs text-slate-500 flex flex-col">
             {quoteInputLabel}
             <input
@@ -111,13 +112,13 @@ function BookingCard({
               step="1"
               value={quoteValue ?? ""}
               onChange={(event) => onQuoteChange && onQuoteChange(booking, event.target.value)}
-              className="mt-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 sm:min-w-[180px]"
               placeholder={quotePlaceholder}
             />
           </label>
           <button
             type="button"
-            className="bg-emerald-600 text-white text-sm px-3 py-2 rounded disabled:opacity-60"
+            className="w-full rounded bg-emerald-600 px-3 py-2 text-sm text-white disabled:opacity-60 sm:w-auto"
             onClick={() => onQuoteSubmit && onQuoteSubmit(booking)}
             disabled={quoteSubmitting}
           >
@@ -191,10 +192,10 @@ function BookingCard({
             onChange={(e) => onRatingCommentChange && onRatingCommentChange(booking, e.target.value)}
           />
           {ratingError && <p className="text-sm text-red-600">{ratingError}</p>}
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             <button
               type="button"
-              className="px-4 py-2 text-sm rounded-lg border border-slate-200"
+              className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm sm:w-auto"
               onClick={() => onRatingCancel && onRatingCancel(booking)}
               disabled={ratingSubmitting}
             >
@@ -202,7 +203,7 @@ function BookingCard({
             </button>
             <button
               type="button"
-              className="px-4 py-2 text-sm rounded-lg bg-amber-500 text-white disabled:opacity-70"
+              className="w-full rounded-lg bg-amber-500 px-4 py-2 text-sm text-white disabled:opacity-70 sm:w-auto"
               onClick={() => onRatingSubmit && onRatingSubmit(booking)}
               disabled={ratingSubmitting}
             >
@@ -211,7 +212,7 @@ function BookingCard({
           </div>
         </div>
       )}
-      <div className="flex flex-wrap gap-6 text-xs text-slate-500">
+      <div className="grid gap-3 text-xs text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
         {timeline.map(
           (entry) =>
             entry.value && (
@@ -232,26 +233,26 @@ function BookingCard({
           <p className="text-xs text-red-500">{disputeError}</p>
         )}
         {onView && (
-          <button className="text-blue-600 text-sm" onClick={() => onView(booking)}>
+          <button className="rounded-md border border-blue-100 px-2.5 py-1.5 text-xs text-blue-600 sm:text-sm" onClick={() => onView(booking)}>
             View Details
           </button>
         )}
         {onChat && (
-          <button className="text-blue-600 text-sm" onClick={() => onChat(booking)}>
+          <button className="rounded-md border border-blue-100 px-2.5 py-1.5 text-xs text-blue-600 sm:text-sm" onClick={() => onChat(booking)}>
             Chat
           </button>
         )}
         {onDispute && (
           <button
             onClick={() => setShowDisputeForm(true)}
-            className="text-red-600 text-sm"
+            className="rounded-md border border-red-100 px-2.5 py-1.5 text-xs text-red-600 sm:text-sm"
           >
             Report an Issue
           </button>
         )}
         {onSecondaryAction && secondaryLabel && (
           <button
-            className="border border-slate-200 text-sm px-3 py-1 rounded"
+            className="rounded border border-slate-200 px-3 py-1.5 text-xs sm:text-sm"
             onClick={() => onSecondaryAction(booking)}
           >
             {secondaryLabel}
@@ -259,7 +260,7 @@ function BookingCard({
         )}
         {onDangerAction && dangerLabel && (
           <button
-            className="border border-red-100 text-sm px-3 py-1 rounded text-red-600"
+            className="rounded border border-red-100 px-3 py-1.5 text-xs text-red-600 sm:text-sm"
             onClick={() => onDangerAction(booking)}
           >
             {dangerLabel}
@@ -267,7 +268,7 @@ function BookingCard({
         )}
         {onPrimaryAction && primaryLabel && (
           <button
-            className="bg-blue-600 text-white text-sm px-3 py-1 rounded"
+            className="rounded bg-blue-600 px-3 py-1.5 text-xs text-white sm:text-sm"
             onClick={() => onPrimaryAction(booking)}
           >
             {primaryLabel}
@@ -276,7 +277,7 @@ function BookingCard({
         {!isRating && canRate && (
           <button
             type="button"
-            className="bg-amber-500 text-white text-sm px-3 py-1 rounded"
+            className="rounded bg-amber-500 px-3 py-1.5 text-xs text-white sm:text-sm"
             onClick={() => onRateStart && onRateStart(booking)}
           >
             Rate Now
@@ -285,7 +286,7 @@ function BookingCard({
         {booking.status === "COMPLETED" && onDownloadReceipt && (
           <button
             type="button"
-            className="bg-emerald-600 text-white text-sm px-3 py-1 rounded disabled:opacity-60"
+            className="rounded bg-emerald-600 px-3 py-1.5 text-xs text-white disabled:opacity-60 sm:text-sm"
             onClick={() => onDownloadReceipt(booking)}
             disabled={receiptDownloading}
           >
@@ -301,6 +302,7 @@ function BookingCard({
           onCancel={() => setShowDisputeForm(false)}
         />
       )}
+      {extraContent}
     </div>
   );
 }

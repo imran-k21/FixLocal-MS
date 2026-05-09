@@ -8,11 +8,27 @@ const statusTone = {
   CLOSED: "bg-slate-200 text-slate-800",
 };
 
+const severityTone = {
+  HIGH: "bg-rose-100 text-rose-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  LOW: "bg-emerald-100 text-emerald-700",
+};
+
 function StatusPill({ status }) {
   const tone = statusTone[status] || "bg-slate-200 text-slate-700";
   return (
     <span className={`px-2 py-1 text-[11px] font-semibold rounded-full ${tone}`}>
       {status?.replace("_", " ")}
+    </span>
+  );
+}
+
+function SeverityPill({ severity }) {
+  if (!severity) return null;
+  const tone = severityTone[severity] || "bg-slate-100 text-slate-700";
+  return (
+    <span className={`px-2 py-1 text-[11px] font-semibold rounded-full ${tone}`}>
+      {severity}
     </span>
   );
 }
@@ -29,7 +45,10 @@ function DisputeCard({ dispute, onSelect }) {
           <p className="text-xs text-slate-500 uppercase">Booking</p>
           <p className="text-sm font-semibold text-blue-600">#{dispute.bookingId?.slice(-6)}</p>
         </div>
-        <StatusPill status={dispute.status} />
+        <div className="flex items-center gap-2">
+          <SeverityPill severity={dispute.aiTriage?.severity} />
+          <StatusPill status={dispute.status} />
+        </div>
       </div>
       <div>
         <p className="text-xs uppercase text-slate-500">Reason</p>
@@ -38,6 +57,15 @@ function DisputeCard({ dispute, onSelect }) {
       <div className="text-xs text-slate-500">
         Opened {new Date(dispute.createdAt).toLocaleString()}
       </div>
+      {dispute.aiTriage && (
+        <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-1">
+          <p className="text-[11px] uppercase text-violet-700 font-semibold">AI Triage</p>
+          <p className="text-xs text-slate-700 line-clamp-3">{dispute.aiTriage.summary}</p>
+          <div className="text-[11px] text-slate-600">
+            Urgency: <span className="font-semibold">{dispute.aiTriage.urgencyScore ?? "-"}/100</span>
+          </div>
+        </div>
+      )}
       {dispute.messages?.length > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 space-y-2">
           <p className="text-xs text-slate-500 uppercase">Latest update</p>

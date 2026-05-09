@@ -43,8 +43,8 @@ app:
 payment:
   razorpay:
     base-url: ${RAZORPAY_BASE_URL:https://api.razorpay.com}
-    key-id: ${RAZORPAY_KEY_ID:}
-    key-secret: ${RAZORPAY_KEY_SECRET:}
+    key-id: ${RAZORPAY_KEY_ID:rzp_test_SnFn3jJbetvNZd}
+    key-secret: ${RAZORPAY_KEY_SECRET:bxrJR6Vp755gDhP04WBStDNF}
     webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
     currency: ${RAZORPAY_CURRENCY:INR}
 

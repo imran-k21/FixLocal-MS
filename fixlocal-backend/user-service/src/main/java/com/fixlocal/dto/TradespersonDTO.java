@@ -37,4 +37,11 @@ public class TradespersonDTO {
     private List<ServiceOfferingDTO> serviceOfferings;
 
     private Double distanceKm;
+
+    // AI Match & Fair-Quote Copilot fields
+    private Double aiMatchScore;
+    private String aiMatchReason;
+    private Double aiSuggestedOfferMin;
+    private Double aiSuggestedOfferMax;
+    private Double aiSuggestedOffer;
 }

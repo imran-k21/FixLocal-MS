@@ -163,8 +163,8 @@ function SearchBar({ initialCity = "", initialService = "", onSearch }) {
   };
 
   return (
-    <div className="glass-panel-strong animated-outline animate-fade-in-up relative z-30 flex flex-col justify-center gap-4 overflow-visible rounded-2xl p-4 md:flex-row md:items-center md:p-5">
-      <div className="relative z-40 md:flex-1" ref={suggestionsRef}>
+    <div className="glass-panel-strong animated-outline animate-fade-in-up relative z-30 flex flex-col justify-center gap-3 overflow-visible rounded-2xl p-3 sm:gap-4 sm:p-4 md:flex-row md:items-center md:p-5">
+      <div className="relative z-40 w-full md:flex-1" ref={suggestionsRef}>
         <input
           type="text"
           placeholder="Enter city"
@@ -193,14 +193,14 @@ function SearchBar({ initialCity = "", initialService = "", onSearch }) {
       <button
         type="button"
         onClick={handleUseMyLocation}
-        className="rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-text-primary transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg"
+        className="w-full rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-text-primary transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg md:w-auto"
         disabled={locationLoading}
       >
         {locationLoading ? "Detecting…" : "Use My Location"}
       </button>
 
       <select
-        className="rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-text-primary shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25"
+        className="w-full rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-text-primary shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 md:w-auto"
         value={service ?? ""}
         onChange={(e) => setService(e.target.value)}
       >
@@ -213,7 +213,7 @@ function SearchBar({ initialCity = "", initialService = "", onSearch }) {
 
       <button
         onClick={handleSearch}
-        className="btn-glow shimmer relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-indigo-600 to-fuchsia-600 px-6 py-2.5 text-white transition hover:from-indigo-600 hover:to-primary"
+        className="btn-glow shimmer relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-primary via-indigo-600 to-fuchsia-600 px-6 py-2.5 text-white transition hover:from-indigo-600 hover:to-primary md:w-auto"
       >
         Search
       </button>

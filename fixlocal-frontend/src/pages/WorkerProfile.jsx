@@ -18,6 +18,7 @@ function WorkerProfile() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [fetchingSuggestions, setFetchingSuggestions] = useState(false);
   const [coords, setCoords] = useState({ lat: "", lng: "" });
+  const [offerAmount, setOfferAmount] = useState("");
   const [geoStatus, setGeoStatus] = useState("");
   const suggestionRef = useRef(null);
 
@@ -26,7 +27,27 @@ function WorkerProfile() {
       setError("");
       try {
         const res = await api.get(`/tradespersons/${id}`);
-        setWorker(res.data);
+        const fetchedWorker = res.data;
+        setWorker(fetchedWorker);
+
+        const aiSuggestedOffer = Number(fetchedWorker?.aiSuggestedOffer);
+        const serviceBasePrice = Number(
+          fetchedWorker?.serviceOfferings?.find((offering) =>
+            Number.isFinite(Number(offering?.basePrice)) && Number(offering.basePrice) > 0
+          )?.basePrice
+        );
+        const fallbackOffer = Number(fetchedWorker?.rate ?? fetchedWorker?.baseRate ?? 1000);
+
+        const seededOffer =
+          Number.isFinite(aiSuggestedOffer) && aiSuggestedOffer > 0
+            ? aiSuggestedOffer
+            : Number.isFinite(serviceBasePrice) && serviceBasePrice > 0
+              ? serviceBasePrice
+              : Number.isFinite(fallbackOffer) && fallbackOffer > 0
+                ? fallbackOffer
+                : 1000;
+
+        setOfferAmount(String(Math.round(seededOffer)));
       } catch (err) {
         setError("Failed to load tradesperson profile.");
       }
@@ -139,6 +160,12 @@ function WorkerProfile() {
       return;
     }
 
+    const parsedOfferAmount = Number(offerAmount);
+    if (!Number.isFinite(parsedOfferAmount) || parsedOfferAmount <= 0) {
+      setError("Please enter a valid offer amount.");
+      return;
+    }
+
     let lat = parseCoord(coords.lat);
     let lng = parseCoord(coords.lng);
 
@@ -181,7 +208,7 @@ function WorkerProfile() {
         serviceDescription: `Booking with ${worker?.name || "tradesperson"}`,
         bookingStartTime: start.toISOString(),
         bookingEndTime: end.toISOString(),
-        offerAmount: worker?.rate || worker?.baseRate || 1000,
+        offerAmount: parsedOfferAmount,
         userCity: address,
         userLatitude: lat,
         userLongitude: lng,
@@ -200,6 +227,18 @@ function WorkerProfile() {
   const workerPhone =
     worker?.phone || worker?.mobile || worker?.mobileNumber || worker?.contactNumber;
   const formattedPhone = workerPhone ? formatPhoneForDisplay(workerPhone) : "";
+  const aiMatchScore = Number.isFinite(Number(worker?.aiMatchScore))
+    ? Number(worker.aiMatchScore).toFixed(1)
+    : null;
+  const aiSuggestedOffer = Number.isFinite(Number(worker?.aiSuggestedOffer))
+    ? Number(worker.aiSuggestedOffer)
+    : null;
+  const aiSuggestedMin = Number.isFinite(Number(worker?.aiSuggestedOfferMin))
+    ? Number(worker.aiSuggestedOfferMin)
+    : null;
+  const aiSuggestedMax = Number.isFinite(Number(worker?.aiSuggestedOfferMax))
+    ? Number(worker.aiSuggestedOfferMax)
+    : null;
 
   return (
     <div className="py-12">
@@ -250,6 +289,27 @@ function WorkerProfile() {
               </dd>
             </div>
           </dl>
+
+          {(aiMatchScore || worker?.aiMatchReason || aiSuggestedOffer) && (
+            <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+              <p className="text-sm font-semibold text-indigo-800">🤖 AI Match & Fair-Quote Copilot</p>
+              {aiMatchScore && (
+                <p className="mt-1 text-sm text-indigo-700">Match score: {aiMatchScore}/100</p>
+              )}
+              {worker?.aiMatchReason && (
+                <p className="mt-1 text-xs text-indigo-700/90">{worker.aiMatchReason}</p>
+              )}
+              {aiSuggestedOffer && (
+                <p className="mt-2 text-sm text-emerald-700">
+                  Suggested fair offer: ₹{Math.round(aiSuggestedOffer)}
+                  {aiSuggestedMin && aiSuggestedMax
+                    ? ` (range ₹${Math.round(aiSuggestedMin)} - ₹${Math.round(aiSuggestedMax)})`
+                    : ""}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-6 grid gap-4">
             <div className="relative" ref={suggestionRef}>
               <label className="text-sm text-text-secondary">Your address</label>
@@ -351,6 +411,33 @@ function WorkerProfile() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <label className="text-sm font-medium text-slate-700">Your offer amount (₹)</label>
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <input
+                  type="number"
+                  min="1"
+                  step="10"
+                  value={offerAmount}
+                  onChange={(e) => setOfferAmount(e.target.value)}
+                  placeholder="Enter your offer"
+                  className="w-full border rounded-xl px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                {aiSuggestedOffer && (
+                  <button
+                    type="button"
+                    onClick={() => setOfferAmount(String(Math.round(aiSuggestedOffer)))}
+                    className="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+                  >
+                    Use AI suggestion
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500">
+                This amount will be sent as your initial booking offer and can still be negotiated in-app.
+              </p>
             </div>
           </div>
           {error && <p className="mt-4 text-sm text-red-500">{error}</p>}

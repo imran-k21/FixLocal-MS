@@ -45,8 +45,8 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="flex items-center justify-center py-16">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8">
+    <div className="flex items-center justify-center px-1 py-8 sm:px-2 sm:py-12 md:py-16">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-lg sm:p-8">
         <h1 className="text-2xl font-bold mb-2 text-center text-text-primary">Forgot Password</h1>
         <p className="text-sm text-slate-500 text-center mb-6">
           Enter your email and set a new password.

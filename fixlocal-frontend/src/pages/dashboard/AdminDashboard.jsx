@@ -117,10 +117,10 @@ function AdminDashboard() {
   };
 
   const renderTable = (title, pageData, state) => (
-    <div className="bg-white rounded-2xl shadow border border-slate-100 p-4">
-      <div className="flex justify-between items-center mb-3">
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <div className="relative">
             <input
               type="text"
@@ -208,7 +208,7 @@ function AdminDashboard() {
           </table>
         </div>
       )}
-      <div className="flex justify-between items-center mt-3 text-xs">
+      <div className="mt-3 flex items-center justify-between text-xs">
         <button
           className="px-3 py-1 rounded border"
           disabled={state.page === 0}
@@ -235,7 +235,7 @@ function AdminDashboard() {
         <p className="text-slate-600">Loading metrics...</p>
       ) : (
         <>
-          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {kpis.map((tile) => (
               <div key={tile.key} className="bg-white p-4 rounded-2xl shadow border border-slate-100">
                 <p className="text-xs uppercase tracking-wide text-slate-500">{tile.label}</p>
@@ -251,16 +251,16 @@ function AdminDashboard() {
               <li>• Blocked accounts highlight compliance actions.</li>
             </ul>
           </div>
-          <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
             {renderTable("Users", usersState.data, usersState)}
             {renderTable("Tradespersons", tradesState.data, tradesState)}
           </div>
         </>
       )}
       {selectedProfile && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center z-40" onClick={() => setSelectedProfile(null)}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-3" onClick={() => setSelectedProfile(null)}>
           <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative"
+            className="relative w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -294,7 +294,7 @@ function AdminDashboard() {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase text-slate-500">Role</p>
                 <p className="font-semibold text-slate-800">{selectedProfile.role}</p>

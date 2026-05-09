@@ -33,8 +33,8 @@ function Login() {
   };
 
   return (
-    <div className="animate-fade-in-up flex items-center justify-center py-16">
-      <div className="glass-panel-strong animated-outline hover-tilt w-full max-w-md rounded-3xl p-8 shadow-2xl">
+    <div className="animate-fade-in-up flex items-center justify-center px-1 py-8 sm:px-2 sm:py-12 md:py-16">
+      <div className="glass-panel-strong animated-outline hover-tilt w-full max-w-md rounded-2xl p-5 shadow-2xl sm:rounded-3xl sm:p-8">
         <h1 className="mb-2 text-center text-3xl font-bold text-gradient-fire">Welcome back</h1>
         <p className="mb-6 text-center text-sm text-slate-600">Login to continue booking trusted local pros.</p>
         {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-500">{error}</p>}

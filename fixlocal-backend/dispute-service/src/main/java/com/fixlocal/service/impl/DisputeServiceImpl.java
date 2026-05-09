@@ -21,6 +21,7 @@ import com.fixlocal.dto.DisputeRequest;
 import com.fixlocal.exception.ErrorCode;
 import com.fixlocal.exception.DisputeException;
 import com.fixlocal.entity.Dispute;
+import com.fixlocal.enums.DisputeStatus;
 import com.fixlocal.repository.DisputeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -199,7 +200,169 @@ public class DisputeServiceImpl implements DisputeService {
                 .respondent(toUserSummary(respondent))
                 .booking(toBookingSummary(booking, userCache))
                 .messages(messageDTOS)
+                .aiTriage(buildAiTriage(dispute, booking, reporter, respondent, messageDTOS))
                 .build();
+    }
+
+    private DisputeDetailsDTO.AITriage buildAiTriage(Dispute dispute,
+                                                     Map<String, Object> booking,
+                                                     Map<String, Object> reporter,
+                                                     Map<String, Object> respondent,
+                                                     List<DisputeDetailsDTO.MessageDTO> messages) {
+
+        List<String> signals = new ArrayList<>();
+
+        String reason = normalizeText(dispute.getReason());
+        String desired = normalizeText(dispute.getDesiredOutcome());
+        String bookingStatus = normalize(getString(booking, "status"));
+        String reporterRole = normalize(getString(reporter, "role"));
+
+        int urgencyScore = 35;
+
+        if (containsAny(reason, "scam", "fraud", "stole", "theft", "police", "harass", "threat", "abuse", "unsafe")) {
+            urgencyScore += 35;
+            signals.add("Safety/fraud indicator found in reason");
+        }
+
+        if (containsAny(reason, "no show", "did not come", "late", "delay", "not responding", "unreachable")) {
+            urgencyScore += 15;
+            signals.add("Service delivery reliability concern");
+        }
+
+        if (containsAny(reason, "payment", "refund", "charged", "money", "amount", "overcharged")) {
+            urgencyScore += 18;
+            signals.add("Payment-related conflict");
+        }
+
+        if (containsAny(reason, "damage", "broken", "spoiled", "defect", "poor quality", "bad work")) {
+            urgencyScore += 20;
+            signals.add("Quality/damage claim");
+        }
+
+        if (containsAny(desired, "full refund", "refund", "compensation", "replace", "rework")) {
+            urgencyScore += 10;
+            signals.add("Monetary or corrective action requested");
+        }
+
+        if ("completed".equals(bookingStatus)) {
+            urgencyScore += 8;
+            signals.add("Booking already completed, post-service dispute");
+        } else if ("en_route".equals(bookingStatus) || "arrived".equals(bookingStatus)) {
+            urgencyScore += 6;
+            signals.add("Dispute raised during active engagement");
+        }
+
+        if (messages != null && messages.size() >= 5) {
+            urgencyScore += 8;
+            signals.add("Long dispute conversation thread");
+        }
+
+        if ("user".equals(reporterRole) && containsAny(reason, "unsafe", "threat", "abuse")) {
+            urgencyScore += 8;
+            signals.add("Customer safety concern");
+        }
+
+        urgencyScore = Math.max(0, Math.min(100, urgencyScore));
+
+        String severity;
+        if (urgencyScore >= 75) {
+            severity = "HIGH";
+        } else if (urgencyScore >= 50) {
+            severity = "MEDIUM";
+        } else {
+            severity = "LOW";
+        }
+
+        String suggestedStatus;
+        if (urgencyScore >= 75) {
+            suggestedStatus = DisputeStatus.UNDER_REVIEW.name();
+        } else if (urgencyScore >= 50) {
+            suggestedStatus = DisputeStatus.UNDER_REVIEW.name();
+        } else {
+            suggestedStatus = dispute.getStatus() == DisputeStatus.OPEN
+                    ? DisputeStatus.OPEN.name()
+                    : dispute.getStatus().name();
+        }
+
+        String recommendedAction;
+        if (urgencyScore >= 75) {
+            recommendedAction = "Escalate to senior admin, collect timeline evidence, and contact both parties within 2 hours.";
+        } else if (containsAny(reason, "payment", "refund", "charged", "amount")) {
+            recommendedAction = "Verify payment and booking status, then evaluate refund/partial compensation path.";
+        } else if (containsAny(reason, "damage", "broken", "defect", "poor quality")) {
+            recommendedAction = "Request photo/video proof and assess rework vs compensation resolution.";
+        } else {
+            recommendedAction = "Collect both sides' statements and attempt mediated resolution with clear next steps.";
+        }
+
+        if (signals.isEmpty()) {
+            signals.add("General service disagreement");
+        }
+
+        String summary = buildAiSummary(dispute, booking, reporter, respondent, severity, signals);
+
+        return DisputeDetailsDTO.AITriage.builder()
+                .summary(summary)
+                .severity(severity)
+                .urgencyScore(urgencyScore)
+                .suggestedStatus(suggestedStatus)
+                .recommendedAction(recommendedAction)
+                .signals(signals)
+                .build();
+    }
+
+    private String buildAiSummary(Dispute dispute,
+                                  Map<String, Object> booking,
+                                  Map<String, Object> reporter,
+                                  Map<String, Object> respondent,
+                                  String severity,
+                                  List<String> signals) {
+        String reporterName = getString(reporter, "name");
+        String respondentName = getString(respondent, "name");
+        String bookingStatus = getString(booking, "status");
+        String reason = safeText(dispute.getReason(), 140);
+
+        String reporterDisplay = reporterName != null ? reporterName : "Reporter";
+        String respondentDisplay = respondentName != null ? respondentName : "Respondent";
+        String statusDisplay = bookingStatus != null ? bookingStatus : "UNKNOWN";
+
+        return String.format(
+                "%s raised a %s-severity dispute against %s for booking status %s. Primary concern: %s. Key signals: %s.",
+                reporterDisplay,
+                severity,
+                respondentDisplay,
+                statusDisplay,
+                reason,
+                String.join(", ", signals)
+        );
+    }
+
+    private String normalizeText(String value) {
+        if (value == null) return "";
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean containsAny(String input, String... keywords) {
+        if (input == null || input.isBlank()) {
+            return false;
+        }
+        for (String keyword : keywords) {
+            if (keyword != null && !keyword.isBlank() && input.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String safeText(String value, int maxLen) {
+        if (value == null || value.isBlank()) {
+            return "No reason provided";
+        }
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        if (normalized.length() <= maxLen) {
+            return normalized;
+        }
+        return normalized.substring(0, Math.max(0, maxLen - 3)) + "...";
     }
 
     private List<DisputeDetailsDTO.MessageDTO> buildMessageDTOs(Dispute dispute,

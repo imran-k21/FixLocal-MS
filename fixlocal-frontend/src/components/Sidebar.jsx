@@ -56,7 +56,7 @@ function Sidebar({ open, onClose }) {
         }`}
       />
       <div
-        className={`glass-panel-strong animate-aurora fixed inset-y-0 left-0 z-50 w-72 border-r border-white/70 shadow-2xl transition-transform duration-300 ease-out ${
+        className={`glass-panel-strong animate-aurora fixed inset-y-0 left-0 z-50 w-[86vw] max-w-72 border-r border-white/70 shadow-2xl transition-transform duration-300 ease-out sm:w-72 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

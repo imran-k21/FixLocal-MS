@@ -117,23 +117,23 @@ function SearchResults() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-6 space-y-8 animate-fade-in-up">
+    <div className="mx-auto max-w-6xl space-y-6 px-1 py-6 animate-fade-in-up sm:space-y-8 sm:px-2 sm:py-8 md:py-10">
       <div className="space-y-6">
         <SearchBar initialCity={city} initialService={service} onSearch={handleSearch} />
-        <div className="glass-panel-strong animated-outline flex flex-wrap gap-4 rounded-2xl p-4 shadow-xl">
-          <div>
+        <div className="glass-panel-strong animated-outline grid grid-cols-1 gap-3 rounded-2xl p-3 shadow-xl sm:grid-cols-2 sm:gap-4 sm:p-4 lg:grid-cols-3">
+          <div className="min-w-0">
             <p className="text-xs text-slate-500 uppercase">Max price (₹)</p>
             <input
               type="number"
-              className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               value={priceCap}
               onChange={(e) => setPriceCap(e.target.value)}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-slate-500 uppercase">Minimum rating</p>
             <select
-              className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               value={minRating}
               onChange={(e) => setMinRating(Number(e.target.value))}
             >
@@ -144,10 +144,10 @@ function SearchResults() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
             <p className="text-xs text-slate-500 uppercase">Sort by</p>
             <select
-              className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
@@ -158,7 +158,7 @@ function SearchResults() {
           </div>
         </div>
       </div>
-      <h1 className="mb-2 text-3xl font-bold text-gradient-fire">
+      <h1 className="mb-2 text-2xl font-bold text-gradient-fire sm:text-3xl">
         {service ? `${service} in ${city || "your area"}` : `Tradespersons in ${city || "your area"}`}
       </h1>
       {loading && <p className="rounded-lg bg-white/60 px-3 py-2 text-text-secondary">Loading workers...</p>}
@@ -166,7 +166,7 @@ function SearchResults() {
       {!loading && !error && visible.length === 0 && (
         <p className="rounded-lg bg-white/60 px-3 py-2 text-text-secondary">No tradespersons found for this search.</p>
       )}
-      <div className="stagger-children grid gap-6 md:grid-cols-3">
+      <div className="stagger-children grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {visible.map((worker) => (
           <WorkerCard key={worker.id} worker={worker} />
         ))}

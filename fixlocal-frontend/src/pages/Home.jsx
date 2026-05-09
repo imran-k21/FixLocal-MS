@@ -263,21 +263,21 @@ function Home() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <section
-        className="animate-aurora relative overflow-visible rounded-[2rem] bg-gradient-to-r from-[#1d4ed8] via-[#6366f1] to-[#a855f7] px-6 py-20 text-white shadow-2xl shimmer"
+        className="animate-aurora relative overflow-visible rounded-[1.5rem] bg-gradient-to-r from-[#1d4ed8] via-[#6366f1] to-[#a855f7] px-4 py-12 text-white shadow-2xl shimmer sm:rounded-[2rem] sm:px-6 sm:py-16 lg:py-20"
         style={{ overflow: "visible" }}
       >
         <div className="pointer-events-none absolute -left-10 top-10 h-44 w-44 rounded-full bg-white/20 blur-3xl animate-soft-float" />
         <div className="pointer-events-none absolute -right-8 bottom-8 h-56 w-56 rounded-full bg-cyan-300/30 blur-3xl animate-soft-float-delayed" />
 
         <div className="relative mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl font-bold md:text-5xl mb-4">
+          <h1 className="mb-4 text-3xl font-bold sm:text-4xl md:text-5xl">
             Book trusted pros for any job
           </h1>
-          <p className="text-lg text-white/90 mb-8">
+          <p className="mb-8 text-base text-white/90 sm:text-lg">
             Instant bookings, live tracking, secure payments, and in-app chat.
           </p>
 
-          <div className="glass-panel-strong animated-outline relative z-30 mx-auto flex max-w-5xl flex-col gap-4 overflow-visible rounded-2xl p-6 text-left md:flex-row md:items-center">
+          <div className="glass-panel-strong animated-outline relative z-30 mx-auto flex max-w-5xl flex-col gap-3 overflow-visible rounded-2xl p-4 text-left sm:gap-4 sm:p-6 md:flex-row md:items-center">
             <div className="relative z-40 flex-1" ref={cityDropdownRef}>
               <input
                 value={city}
@@ -316,7 +316,7 @@ function Home() {
             </select>
             <button
               onClick={handleSearch}
-              className="btn-glow rounded-xl bg-white px-6 py-3 font-semibold text-blue-700"
+              className="btn-glow w-full rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 md:w-auto"
             >
               Search
             </button>
@@ -324,7 +324,7 @@ function Home() {
               type="button"
               onClick={handleSearchByCurrentLocation}
               disabled={locationSearching}
-              className="rounded-xl border border-white/60 px-5 py-3 font-semibold text-white transition hover:bg-white/15 disabled:opacity-70"
+              className="w-full rounded-xl border border-white/60 px-5 py-3 font-semibold text-white transition hover:bg-white/15 disabled:opacity-70 md:w-auto"
             >
               {locationSearching ? "Detecting GPS..." : "Search by Current GPS"}
             </button>
@@ -335,7 +335,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="stagger-children mx-auto grid max-w-6xl gap-6 px-2 py-8 md:grid-cols-3">
+      <section className="stagger-children mx-auto grid max-w-6xl gap-4 px-1 py-6 sm:gap-6 sm:px-2 sm:py-8 md:grid-cols-3">
         {trustBadges.map((badge) => (
           <div key={badge.title} className="lift-card hover-tilt gradient-border glass-panel rounded-2xl p-6 shadow-lg">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-2xl">🔒</span>
@@ -345,8 +345,8 @@ function Home() {
         ))}
       </section>
 
-      <section className="animate-aurora overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0f172a] via-[#1d4ed8] to-[#6d28d9] text-white shadow-2xl">
-        <div className="mx-auto grid max-w-5xl gap-6 px-6 py-14 md:grid-cols-3">
+      <section className="animate-aurora overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-[#0f172a] via-[#1d4ed8] to-[#6d28d9] text-white shadow-2xl sm:rounded-[2rem]">
+        <div className="mx-auto grid max-w-5xl gap-4 px-4 py-10 sm:gap-6 sm:px-6 sm:py-14 md:grid-cols-3">
           {highlights.map((item) => (
             <div key={item.label} className="lift-card hover-tilt rounded-2xl border border-white/20 bg-white/10 p-5 text-center backdrop-blur">
               <p className="text-4xl font-bold">{item.value}</p>
@@ -357,8 +357,8 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-2 py-10">
-        <h2 className="text-gradient text-center text-3xl font-bold mb-8">
+      <section className="mx-auto max-w-6xl px-1 py-8 sm:px-2 sm:py-10">
+        <h2 className="text-gradient mb-8 text-center text-2xl font-bold sm:text-3xl">
           Why homeowners love FixLocal
         </h2>
         {testimonialError && (
@@ -379,7 +379,7 @@ function Home() {
           {isAuthenticated ? (
             <form
               onSubmit={handleTestimonialSubmit}
-              className="glass-panel-strong animated-outline rounded-2xl p-6 shadow-lg grid gap-4 md:grid-cols-2"
+              className="glass-panel-strong animated-outline grid gap-4 rounded-2xl p-4 shadow-lg sm:p-6 md:grid-cols-2"
             >
               <div className="col-span-1">
                 <label className="block text-sm font-semibold text-slate-700">Name</label>
@@ -426,10 +426,10 @@ function Home() {
               {testimonialSuccess && (
                 <p className="text-sm text-emerald-600 md:col-span-2">{testimonialSuccess}</p>
               )}
-              <div className="md:col-span-2 flex justify-end">
+              <div className="flex md:col-span-2 md:justify-end">
                 <button
                   type="submit"
-                  className="btn-glow rounded-full bg-gradient-to-r from-primary to-violet-600 px-5 py-2 text-white disabled:opacity-60"
+                  className="btn-glow w-full rounded-full bg-gradient-to-r from-primary to-violet-600 px-5 py-2 text-white disabled:opacity-60 md:w-auto"
                   disabled={testimonialSubmitting}
                 >
                   {testimonialSubmitting ? "Saving..." : "Submit testimonial"}
@@ -444,8 +444,8 @@ function Home() {
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-slate-200/70 bg-gradient-to-r from-slate-100 to-white shadow-lg">
-        <div className="stagger-children mx-auto grid max-w-6xl gap-6 px-6 py-16 md:grid-cols-3">
+      <section className="rounded-[1.5rem] border border-slate-200/70 bg-gradient-to-r from-slate-100 to-white shadow-lg sm:rounded-[2rem]">
+        <div className="stagger-children mx-auto grid max-w-6xl gap-4 px-4 py-10 sm:gap-6 sm:px-6 sm:py-16 md:grid-cols-3">
           {howItWorks.map((item) => (
             <div key={item.step} className="lift-card hover-tilt gradient-border rounded-2xl bg-white p-6 shadow-lg">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary animate-pulse-glow">
@@ -458,13 +458,13 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-2 py-12 md:grid-cols-2">
+      <section className="mx-auto grid max-w-6xl gap-4 px-1 py-8 sm:gap-6 sm:px-2 sm:py-12 md:grid-cols-2">
         <div className="lift-card hover-tilt glass-panel-strong gradient-border rounded-2xl p-6 shadow-lg">
-          <h3 className="text-2xl font-bold text-slate-900">Popular categories</h3>
+          <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">Popular categories</h3>
           <p className="text-slate-600 mt-2">
             Trending FixLocal requests across metros — tap to explore specialists instantly.
           </p>
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {services.map((item) => (
               <button
                 key={item.value}
@@ -480,7 +480,7 @@ function Home() {
         </div>
         <div className="lift-card hover-tilt shimmer animate-aurora relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-indigo-600 to-fuchsia-600 p-6 text-white shadow-2xl">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
-          <h3 className="text-2xl font-bold">FixLocal Assurance</h3>
+          <h3 className="text-xl font-bold sm:text-2xl">FixLocal Assurance</h3>
           <p className="text-white/80 mt-2">
             Every booking includes ₹25,000 workmanship cover plus dispute mediation. Need help choosing a pro? Chat with FixLocal concierge on
             WhatsApp or phone — we’ll shortlist the best matches for you.
@@ -492,7 +492,7 @@ function Home() {
           </ul>
           <button
             onClick={() => navigate("/register")}
-            className="mt-5 inline-flex items-center justify-center rounded-full bg-white px-6 py-2 font-semibold text-primary transition hover:-translate-y-0.5 hover:bg-slate-100"
+            className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-2 font-semibold text-primary transition hover:-translate-y-0.5 hover:bg-slate-100 sm:w-auto"
           >
             Become a verified pro
           </button>

@@ -27,6 +27,20 @@ public class DisputeDetailsDTO {
     private UserSummary respondent;
     private BookingSummary booking;
     private List<MessageDTO> messages;
+    private AITriage aiTriage;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AITriage {
+        private String summary;
+        private String severity;
+        private Integer urgencyScore;
+        private String suggestedStatus;
+        private String recommendedAction;
+        private List<String> signals;
+    }
 
     @Data
     @Builder

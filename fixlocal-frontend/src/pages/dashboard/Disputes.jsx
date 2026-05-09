@@ -10,12 +10,28 @@ const statusOptions = [
   { value: "CLOSED", label: "Closed", tone: "bg-slate-200 text-slate-800" },
 ];
 
+const severityTone = {
+  HIGH: "bg-rose-100 text-rose-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  LOW: "bg-emerald-100 text-emerald-700",
+};
+
 function StatusBadge({ value }) {
   const option = statusOptions.find((opt) => opt.value === value);
   if (!option) return null;
   return (
     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${option.tone}`}>
       {option.label}
+    </span>
+  );
+}
+
+function SeverityBadge({ value }) {
+  if (!value) return null;
+  const tone = severityTone[value] || "bg-slate-100 text-slate-700";
+  return (
+    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${tone}`}>
+      {value}
     </span>
   );
 }
@@ -58,6 +74,48 @@ function DisputeDetailDrawer({
           </button>
         </div>
         <div className="p-6 space-y-6">
+          {dispute.aiTriage && (
+            <section className="border border-violet-100 bg-violet-50/40 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-violet-800">AI Triage Copilot</h3>
+                <div className="flex items-center gap-2">
+                  <SeverityBadge value={dispute.aiTriage?.severity} />
+                  <span className="px-2 py-1 text-xs rounded-full bg-white text-violet-700 border border-violet-200">
+                    Urgency {dispute.aiTriage?.urgencyScore ?? "-"}/100
+                  </span>
+                </div>
+              </div>
+              {dispute.aiTriage?.summary && (
+                <p className="text-sm text-slate-700">{dispute.aiTriage.summary}</p>
+              )}
+              <div className="grid md:grid-cols-2 gap-3 text-sm">
+                <div className="bg-white rounded-xl p-3 border border-violet-100">
+                  <p className="text-xs uppercase text-slate-500">AI suggested status</p>
+                  <p className="font-semibold text-slate-800">{dispute.aiTriage?.suggestedStatus || "-"}</p>
+                </div>
+                <div className="bg-white rounded-xl p-3 border border-violet-100">
+                  <p className="text-xs uppercase text-slate-500">Recommended action</p>
+                  <p className="text-slate-700">{dispute.aiTriage?.recommendedAction || "-"}</p>
+                </div>
+              </div>
+              {(dispute.aiTriage?.signals || []).length > 0 && (
+                <div>
+                  <p className="text-xs uppercase text-slate-500 mb-2">Detected signals</p>
+                  <div className="flex flex-wrap gap-2">
+                    {dispute.aiTriage.signals.map((signal, idx) => (
+                      <span
+                        key={`${signal}-${idx}`}
+                        className="px-2 py-1 text-xs rounded-full bg-white border border-violet-100 text-slate-700"
+                      >
+                        {signal}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">Status</h3>
@@ -298,6 +356,9 @@ function Disputes() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  AI
+                </th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -316,6 +377,14 @@ function Disputes() {
                   <td className="px-4 py-3 text-sm">
                     <StatusBadge value={dispute.status} />
                   </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <SeverityBadge value={dispute.aiTriage?.severity} />
+                      {typeof dispute.aiTriage?.urgencyScore === "number" && (
+                        <span className="text-xs text-slate-500">{dispute.aiTriage.urgencyScore}/100</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <select
                       value={dispute.status}
@@ -333,7 +402,7 @@ function Disputes() {
               ))}
               {disputes.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-4 py-6 text-center text-slate-500 text-sm">
+                  <td colSpan="6" className="px-4 py-6 text-center text-slate-500 text-sm">
                     No disputes yet.
                   </td>
                 </tr>

@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -63,6 +64,14 @@ public class RazorpayGatewayClient {
                     .currency(json.path("currency").asText("INR"))
                     .status(json.path("status").asText())
                     .build();
+        } catch (HttpStatusCodeException ex) {
+            String gatewayMessage = extractGatewayErrorMessage(ex);
+            if (ex.getStatusCode().is4xxClientError()) {
+                throw new PaymentException(ErrorCode.BAD_REQUEST,
+                        "Razorpay order creation failed: " + gatewayMessage);
+            }
+            throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
+                    "Failed to create Razorpay order: " + gatewayMessage);
         } catch (Exception ex) {
             throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
                     "Failed to create Razorpay order");
@@ -84,6 +93,17 @@ public class RazorpayGatewayClient {
                     new HttpEntity<>(body, headers),
                     String.class
             );
+        } catch (HttpStatusCodeException ex) {
+            String gatewayMessage = extractGatewayErrorMessage(ex);
+            if (containsIgnoreCase(gatewayMessage, "already captured")) {
+                return;
+            }
+            if (ex.getStatusCode().is4xxClientError()) {
+                throw new PaymentException(ErrorCode.PAYMENT_STATUS_INVALID,
+                        "Unable to capture payment: " + gatewayMessage);
+            }
+            throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
+                    "Failed to capture payment via Razorpay: " + gatewayMessage);
         } catch (Exception ex) {
             throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
                     "Failed to capture payment via Razorpay");
@@ -102,6 +122,17 @@ public class RazorpayGatewayClient {
                     new HttpEntity<>(body, headers),
                     String.class
             );
+        } catch (HttpStatusCodeException ex) {
+            String gatewayMessage = extractGatewayErrorMessage(ex);
+            if (containsIgnoreCase(gatewayMessage, "already refunded")) {
+                return;
+            }
+            if (ex.getStatusCode().is4xxClientError()) {
+                throw new PaymentException(ErrorCode.PAYMENT_STATUS_INVALID,
+                        "Unable to refund payment: " + gatewayMessage);
+            }
+            throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
+                    "Failed to refund payment via Razorpay: " + gatewayMessage);
         } catch (Exception ex) {
             throw new PaymentException(ErrorCode.EXTERNAL_SERVICE_ERROR,
                     "Failed to refund payment via Razorpay");
@@ -122,6 +153,44 @@ public class RazorpayGatewayClient {
     private String basicAuth() {
         String token = keyId + ":" + keySecret;
         return "Basic " + Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String extractGatewayErrorMessage(HttpStatusCodeException ex) {
+        String responseBody = ex.getResponseBodyAsString();
+        if (responseBody == null || responseBody.isBlank()) {
+            return ex.getStatusText();
+        }
+
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode errorNode = root.path("error");
+            if (!errorNode.isMissingNode()) {
+                String description = errorNode.path("description").asText("").trim();
+                if (!description.isBlank()) {
+                    return description;
+                }
+                String reason = errorNode.path("reason").asText("").trim();
+                if (!reason.isBlank()) {
+                    return reason;
+                }
+            }
+
+            String fallbackMessage = root.path("message").asText("").trim();
+            if (!fallbackMessage.isBlank()) {
+                return fallbackMessage;
+            }
+        } catch (Exception ignored) {
+            // fallback to raw response body
+        }
+
+        return responseBody;
+    }
+
+    private boolean containsIgnoreCase(String source, String token) {
+        if (source == null || token == null) {
+            return false;
+        }
+        return source.toLowerCase().contains(token.toLowerCase());
     }
 
     private void ensureConfigured() {

@@ -94,8 +94,8 @@ function ChatThread({ conversation, messages = [], onSend, loading, error }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow border border-slate-100 p-4 flex flex-col min-h-[24rem]">
-      <div className="flex items-center justify-between mb-3">
+    <div className="flex min-h-[22rem] flex-col rounded-2xl border border-slate-100 bg-white p-3 shadow sm:min-h-[24rem] sm:p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold">
             {conversation ? conversation.tradespersonName : "Select a conversation"}
@@ -122,7 +122,7 @@ function ChatThread({ conversation, messages = [], onSend, loading, error }) {
             {group.items.map((msg) => (
               <div key={msg.id} className={`flex ${msg.mine ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`p-3 rounded-2xl text-sm max-w-[80%] shadow-sm ${
+                  className={`max-w-[88%] rounded-2xl p-3 text-sm shadow-sm sm:max-w-[80%] ${
                     msg.mine ? "bg-blue-50" : "bg-slate-100"
                   }`}
                 >
@@ -157,17 +157,17 @@ function ChatThread({ conversation, messages = [], onSend, loading, error }) {
           className="border rounded-lg p-2 text-sm min-h-[3rem]"
           disabled={disabled}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="file"
             name="attachment"
-            className="text-xs"
+            className="w-full text-xs sm:w-auto"
             disabled={disabled}
             accept="image/*,application/pdf"
           />
           <button
             type="submit"
-            className="ml-auto bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="w-full rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50 sm:ml-auto sm:w-auto"
             disabled={disabled}
           >
             Send

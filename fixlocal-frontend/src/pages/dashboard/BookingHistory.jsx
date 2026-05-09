@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import BookingCard from "../../components/BookingCard";
+import PaymentSummary from "../../components/PaymentSummary";
 import { useBookingsData } from "../../hooks/useBookingsData";
 import { downloadBookingReceipt } from "../../utils/bookingReceipt";
 import reviewService from "../../api/reviewService";
 import disputeService from "../../api/disputeService";
+import { bookingService } from "../../api/bookingService";
 
 function BookingHistory() {
   const { bookings, loading, refresh } = useBookingsData();
@@ -17,6 +19,29 @@ function BookingHistory() {
   const [inlineRatingComments, setInlineRatingComments] = useState({});
   const [inlineRatingErrors, setInlineRatingErrors] = useState({});
   const [inlineRatingSubmitting, setInlineRatingSubmitting] = useState(false);
+  const [paymentBusyByBooking, setPaymentBusyByBooking] = useState({});
+
+  const handlePaymentAction = async (booking, action) => {
+    if (!booking?.id) return;
+    setActionNotice("");
+    setPaymentBusyByBooking((prev) => ({ ...prev, [booking.id]: true }));
+    try {
+      if (action === "capture") {
+        await bookingService.payments.capture(booking.id);
+      } else if (action === "refund") {
+        await bookingService.payments.refund(booking.id);
+      } else {
+        return;
+      }
+
+      setActionNotice("Payment updated successfully.");
+      await refresh();
+    } catch (err) {
+      setActionNotice(err?.response?.data?.message || "Payment action failed. Please retry.");
+    } finally {
+      setPaymentBusyByBooking((prev) => ({ ...prev, [booking.id]: false }));
+    }
+  };
 
   const handleDisputeCreate = async (payload) => {
     await disputeService.create({
@@ -146,6 +171,15 @@ function BookingHistory() {
               onRatingCancel={cancelInlineRating}
               ratingSubmitting={inlineRatingSubmitting}
               ratingError={inlineRatingErrors[booking.id]}
+              extraContent={booking.status === "COMPLETED" ? (
+                <PaymentSummary
+                  booking={booking}
+                  embedded
+                  busy={Boolean(paymentBusyByBooking[booking.id])}
+                  onCapture={(item) => handlePaymentAction(item, "capture")}
+                  onRefund={(item) => handlePaymentAction(item, "refund")}
+                />
+              ) : null}
             />
           ))}
         </div>

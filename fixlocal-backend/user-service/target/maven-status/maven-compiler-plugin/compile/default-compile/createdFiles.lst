@@ -10,7 +10,6 @@ com\fixlocal\dto\InternalUserDTO.class
 com\fixlocal\dto\SkillTagsUpdateRequest.class
 com\fixlocal\config\WebConfig.class
 com\fixlocal\enums\Role.class
-com\fixlocal\service\impl\TradespersonServiceImpl.class
 com\fixlocal\security\JwtService.class
 com\fixlocal\exception\ErrorResponse$ErrorResponseBuilder.class
 com\fixlocal\repository\UserRepository.class

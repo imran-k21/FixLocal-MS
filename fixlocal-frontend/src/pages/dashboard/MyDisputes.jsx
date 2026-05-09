@@ -2,6 +2,12 @@ import { useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import MyDisputesPanel from "../../components/MyDisputesPanel";
 
+const severityTone = {
+  HIGH: "bg-rose-100 text-rose-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  LOW: "bg-emerald-100 text-emerald-700",
+};
+
 function MyDisputesPage() {
   const [activeDispute, setActiveDispute] = useState(null);
 
@@ -23,10 +29,42 @@ function MyDisputesPage() {
                   <p className="text-xs uppercase text-slate-500">Booking</p>
                   <p className="text-xl font-semibold text-blue-600">#{activeDispute.bookingId?.slice(-6)}</p>
                 </div>
-                <span className="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary font-semibold">
-                  {activeDispute.status?.replace("_", " ")}
-                </span>
+                <div className="flex items-center gap-2">
+                  {activeDispute.aiTriage?.severity && (
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full font-semibold ${
+                        severityTone[activeDispute.aiTriage.severity] || "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {activeDispute.aiTriage.severity}
+                    </span>
+                  )}
+                  <span className="px-3 py-1 text-xs rounded-full bg-primary/10 text-primary font-semibold">
+                    {activeDispute.status?.replace("_", " ")}
+                  </span>
+                </div>
               </div>
+              {activeDispute.aiTriage && (
+                <div className="p-5 border-b border-slate-100 bg-violet-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase text-violet-700 font-semibold">AI Triage Copilot</p>
+                    <span className="text-xs px-2 py-1 rounded-full bg-white border border-violet-200 text-violet-700">
+                      Urgency {activeDispute.aiTriage.urgencyScore ?? "-"}/100
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700">{activeDispute.aiTriage.summary}</p>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="bg-white rounded-xl border border-violet-100 p-3">
+                      <p className="text-[11px] uppercase text-slate-500">Suggested status</p>
+                      <p className="text-sm font-semibold text-slate-800">{activeDispute.aiTriage.suggestedStatus || "-"}</p>
+                    </div>
+                    <div className="bg-white rounded-xl border border-violet-100 p-3">
+                      <p className="text-[11px] uppercase text-slate-500">Recommended action</p>
+                      <p className="text-sm text-slate-700">{activeDispute.aiTriage.recommendedAction || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <dl className="p-5 grid gap-4">
                 <div>
                   <dt className="text-xs uppercase text-slate-500">Reason</dt>
