@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
+import LocationPartsInput from "../components/LocationPartsInput";
 import { useAuth } from "../context/AuthContext";
 import { dashboardService } from "../api/dashboardService";
 import reviewService from "../api/reviewService";
 import userService from "../api/userService";
+import { isValidCityStateCountry, normalizeCityStateCountry } from "../utils/locationFormat";
 
 function InfoRow({ label, value }) {
   return (
@@ -137,10 +139,16 @@ function Profile() {
     try {
       const payload = {
         name: form.name.trim(),
-        workingCity: form.workingCity.trim(),
+        workingCity: normalizeCityStateCountry(form.workingCity),
         bio: form.bio?.trim() || "",
         phone: form.phone?.trim() || "",
       };
+
+      if (!isValidCityStateCountry(payload.workingCity)) {
+        setSaveError("Working location must be in format: City, State, Country");
+        setSaving(false);
+        return;
+      }
 
       if (isTradesperson) {
         payload.skillTags = form.skillTags;
@@ -265,15 +273,19 @@ function Profile() {
                 />
               </label>
               <label className="flex flex-col text-sm text-slate-600">
-                Working City
-                <input
-                  name="workingCity"
-                  type="text"
-                  className="mt-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                Working Location
+                <div className="mt-1">
+                  <LocationPartsInput
                   value={form.workingCity}
-                  onChange={handleInputChange}
+                  onChange={(combinedLocation) =>
+                    setForm((prev) => ({ ...prev, workingCity: combinedLocation }))
+                  }
+                  showLabels={false}
+                  wrapperClassName="grid gap-2 sm:grid-cols-1 lg:grid-cols-3"
+                  inputClassName="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
-                />
+                  />
+                </div>
               </label>
               <label className="flex flex-col text-sm text-slate-600">
                 Mobile Number

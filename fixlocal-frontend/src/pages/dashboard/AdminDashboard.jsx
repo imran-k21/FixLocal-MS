@@ -6,7 +6,7 @@ import { adminService } from "../../api/adminService";
 const DEFAULT_PAGE = { content: [], number: 0, totalPages: 0, totalElements: 0 };
 const SEARCH_DEBOUNCE_MS = 300;
 
-function usePaginatedList(fetcher) {
+function usePaginatedList(fetcher, enabled = true) {
   const [data, setData] = useState(DEFAULT_PAGE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +24,10 @@ function usePaginatedList(fetcher) {
   }, [search]);
 
   const load = async () => {
+    if (!enabled) {
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -37,8 +41,9 @@ function usePaginatedList(fetcher) {
   };
 
   useEffect(() => {
+    if (!enabled) return;
     load();
-  }, [page, fetcher, debouncedSearch]);
+  }, [page, fetcher, debouncedSearch, enabled]);
 
   return {
     data,
@@ -66,15 +71,19 @@ const tileConfig = [
 ];
 
 function AdminDashboard() {
+  const [selectedRole, setSelectedRole] = useState("USER");
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fetchUsers = useCallback((page, search) => adminService.getUsers(page, search), []);
   const fetchTrades = useCallback((page, search) => adminService.getTradespersons(page, search), []);
-  const usersState = usePaginatedList(fetchUsers);
-  const tradesState = usePaginatedList(fetchTrades);
+  const usersState = usePaginatedList(fetchUsers, selectedRole === "USER");
+  const tradesState = usePaginatedList(fetchTrades, selectedRole === "TRADESPERSON");
   const [actionError, setActionError] = useState("");
   const [selectedProfile, setSelectedProfile] = useState(null);
+
+  const activeState = selectedRole === "USER" ? usersState : tradesState;
+  const activeTitle = selectedRole === "USER" ? "Users" : "Tradespersons";
 
   const loadStats = useCallback(async () => {
     setLoading(true);
@@ -113,6 +122,30 @@ function AdminDashboard() {
       await Promise.all([usersState.reload(), tradesState.reload(), loadStats()]);
     } catch (err) {
       setActionError("Failed to update user status");
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!user?.id) return;
+
+    const label = `${user.name || "Unknown"} (${user.email || "no-email"})`;
+    const confirmed = window.confirm(
+      `Delete ${label}? This action is permanent and cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionError("");
+      await adminService.deleteUser(user.id);
+      if (selectedProfile?.id === user.id) {
+        setSelectedProfile(null);
+      }
+      await Promise.all([activeState.reload(), loadStats()]);
+    } catch (err) {
+      setActionError(err?.response?.data?.message || "Failed to delete user");
     }
   };
 
@@ -195,12 +228,20 @@ function AdminDashboard() {
                     )}
                   </td>
                   <td>
-                    <button
-                      className="text-xs font-semibold text-blue-600"
-                      onClick={() => handleBlockToggle(user.id, user.blocked)}
-                    >
-                      {user.blocked ? "Unblock" : "Block"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="text-xs font-semibold text-blue-600"
+                        onClick={() => handleBlockToggle(user.id, user.blocked)}
+                      >
+                        {user.blocked ? "Unblock" : "Block"}
+                      </button>
+                      <button
+                        className="text-xs font-semibold text-red-600"
+                        onClick={() => handleDeleteUser(user)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -251,9 +292,30 @@ function AdminDashboard() {
               <li>• Blocked accounts highlight compliance actions.</li>
             </ul>
           </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            {renderTable("Users", usersState.data, usersState)}
-            {renderTable("Tradespersons", tradesState.data, tradesState)}
+          <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-4 shadow sm:p-5">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Directory</p>
+                <h3 className="text-lg font-semibold text-slate-900">Account Management</h3>
+              </div>
+              <label className="text-sm text-slate-600">
+                Role
+                <select
+                  value={selectedRole}
+                  onChange={(e) => {
+                    setSelectedRole(e.target.value);
+                    setSelectedProfile(null);
+                    setActionError("");
+                  }}
+                  className="ml-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="USER">Users</option>
+                  <option value="TRADESPERSON">Tradespersons</option>
+                </select>
+              </label>
+            </div>
+
+            {renderTable(activeTitle, activeState.data, activeState)}
           </div>
         </>
       )}
@@ -291,6 +353,12 @@ function AdminDashboard() {
                   }}
                 >
                   {selectedProfile.blocked ? "Unblock user" : "Block user"}
+                </button>
+                <button
+                  className="text-xs font-semibold text-red-600"
+                  onClick={() => handleDeleteUser(selectedProfile)}
+                >
+                  Delete user
                 </button>
               </div>
             </div>

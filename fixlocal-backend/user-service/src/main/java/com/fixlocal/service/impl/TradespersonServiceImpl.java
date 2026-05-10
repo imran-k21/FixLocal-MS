@@ -8,6 +8,7 @@ import com.fixlocal.exception.ErrorCode;
 import com.fixlocal.entity.*;
 import com.fixlocal.enums.*;
 import com.fixlocal.repository.UserRepository;
+import com.fixlocal.util.LocationFormatUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class TradespersonServiceImpl implements TradespersonService {
             throw new UserException(ErrorCode.CITY_REQUIRED);
         }
 
-        city = city.trim();
+        city = LocationFormatUtil.normalizeCityStateCountry(city);
         if (occupation != null) {
             occupation = occupation.trim();
         }

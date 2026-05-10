@@ -77,7 +77,7 @@ function DisputeDetailDrawer({
           {dispute.aiTriage && (
             <section className="border border-violet-100 bg-violet-50/40 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-violet-800">AI Triage Copilot</h3>
+                <h3 className="text-sm font-semibold text-violet-800">Priority Triage Assistant</h3>
                 <div className="flex items-center gap-2">
                   <SeverityBadge value={dispute.aiTriage?.severity} />
                   <span className="px-2 py-1 text-xs rounded-full bg-white text-violet-700 border border-violet-200">
@@ -90,7 +90,7 @@ function DisputeDetailDrawer({
               )}
               <div className="grid md:grid-cols-2 gap-3 text-sm">
                 <div className="bg-white rounded-xl p-3 border border-violet-100">
-                  <p className="text-xs uppercase text-slate-500">AI suggested status</p>
+                  <p className="text-xs uppercase text-slate-500">Suggested status</p>
                   <p className="font-semibold text-slate-800">{dispute.aiTriage?.suggestedStatus || "-"}</p>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-violet-100">
@@ -357,7 +357,7 @@ function Disputes() {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  AI
+                  Priority
                 </th>
                 <th className="px-4 py-3" />
               </tr>

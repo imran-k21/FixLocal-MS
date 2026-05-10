@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import testimonialApi from "../api/testimonialService";
+import LocationPartsInput from "../components/LocationPartsInput";
 import { reverseGeocodeCity } from "../utils/geocode";
+import { isValidCityStateCountry, normalizeCityStateCountry } from "../utils/locationFormat";
 
 export const services = [
   { value: "electrician", label: "Electrician" },
@@ -72,10 +74,6 @@ function Home() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [city, setCity] = useState("");
-  const [allCities, setAllCities] = useState([]);
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const cityDropdownRef = useRef(null);
   const [service, setService] = useState("");
   const [testimonials, setTestimonials] = useState([]);
   const [testimonialError, setTestimonialError] = useState("");
@@ -92,8 +90,12 @@ function Home() {
   const [locationError, setLocationError] = useState("");
 
   const handleSearch = () => {
-    if (!city.trim()) return;
-    const url = new URLSearchParams({ city: city.trim() });
+    const normalizedCity = normalizeCityStateCountry(city);
+    if (!normalizedCity || !isValidCityStateCountry(normalizedCity)) {
+      setLocationError("Please select City, State and Country");
+      return;
+    }
+    const url = new URLSearchParams({ city: normalizedCity });
     if (service.trim()) url.append("service", service.trim());
     navigate(`/search?${url.toString()}`);
   };
@@ -113,9 +115,9 @@ function Home() {
         const longitude = position.coords.longitude;
         try {
           const detectedCity = await reverseGeocodeCity(latitude, longitude);
-          const cityToSearch = (detectedCity || city || "").trim();
+          const cityToSearch = normalizeCityStateCountry(detectedCity || city || "");
           if (!cityToSearch) {
-            setLocationError("Couldn't detect city from GPS. Please enter city manually.");
+            setLocationError("Couldn't detect location. Please enter City, State, Country manually.");
             return;
           }
 
@@ -150,72 +152,6 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    async function fetchCities() {
-      try {
-        const response = await fetch(
-          "https://countriesnow.space/api/v0.1/countries/cities",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ country: "India" }),
-            signal: controller.signal,
-          }
-        );
-        const payload = await response.json();
-        if (!cancelled && payload?.data) {
-          setAllCities(Array.from(new Set(payload.data)).sort((a, b) => a.localeCompare(b)));
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.warn("Could not load city list", error);
-        }
-      }
-    }
-
-    fetchCities();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target)) {
-        setShowSuggestions(false);
-      }
-    }
-
-    if (showSuggestions) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showSuggestions]);
-
-  const handleCityInput = (value) => {
-    setCity(value);
-    if (!value.trim()) {
-      setCitySuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    const prefix = value.toLowerCase();
-    const matches = allCities.filter((name) => name.toLowerCase().startsWith(prefix));
-    setCitySuggestions(matches);
-    setShowSuggestions(matches.length > 0);
-  };
-
-  const selectCity = (value) => {
-    setCity(value);
-    setShowSuggestions(false);
-  };
-
-  useEffect(() => {
     if (user) {
       setTestimonialForm((prev) => ({
         ...prev,
@@ -235,12 +171,16 @@ function Home() {
     setTestimonialSuccess("");
     const payload = {
       name: testimonialForm.name.trim(),
-      city: testimonialForm.city.trim(),
+      city: normalizeCityStateCountry(testimonialForm.city),
       role: testimonialForm.role.trim(),
       quote: testimonialForm.quote.trim(),
     };
     if (!payload.name || !payload.city || !payload.quote) {
-      setTestimonialFormError("Please fill in your name, city, and testimonial.");
+      setTestimonialFormError("Please fill in your name, location, and testimonial.");
+      return;
+    }
+    if (!isValidCityStateCountry(payload.city)) {
+      setTestimonialFormError("Location must be in format: City, State, Country.");
       return;
     }
     if (payload.quote.length < 20) {
@@ -277,57 +217,45 @@ function Home() {
             Instant bookings, live tracking, secure payments, and in-app chat.
           </p>
 
-          <div className="glass-panel-strong animated-outline relative z-30 mx-auto flex max-w-5xl flex-col gap-3 overflow-visible rounded-2xl p-4 text-left sm:gap-4 sm:p-6 md:flex-row md:items-center">
-            <div className="relative z-40 flex-1" ref={cityDropdownRef}>
-              <input
+          <div className="glass-panel-strong animated-outline relative z-30 mx-auto flex w-full max-w-5xl flex-col gap-3 overflow-visible rounded-2xl p-4 text-left sm:gap-4 sm:p-6">
+            <div className="relative z-40 w-full">
+              <LocationPartsInput
                 value={city}
-                onChange={(e) => handleCityInput(e.target.value)}
-                onFocus={() => city && setShowSuggestions(citySuggestions.length > 0)}
-                placeholder="Enter city"
-                className="w-full rounded-xl border border-white/60 bg-white px-4 py-3 text-gray-900 shadow"
-                autoComplete="off"
+                onChange={setCity}
+                showLabels={false}
+                required
+                wrapperClassName="grid gap-2 sm:grid-cols-1 lg:grid-cols-3"
+                inputClassName="w-full min-h-[46px] rounded-xl border border-white/60 bg-white px-4 py-3 text-gray-900 shadow focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25"
               />
-              {showSuggestions && citySuggestions.length > 0 && (
-                <div className="absolute left-0 top-full z-[90] mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white text-left shadow-lg">
-                  {citySuggestions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      className="block w-full px-4 py-2 text-sm text-slate-700 hover:bg-primary/10"
-                      onClick={() => selectCity(option)}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
-            <select
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="flex-1 rounded-xl border border-white/60 bg-white px-4 py-3 text-gray-900 shadow"
-            >
-              <option value="">All Services</option>
-              {services.map((service) => (
-                <option key={service.value} value={service.value}>
-                  {service.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleSearch}
-              className="btn-glow w-full rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 md:w-auto"
-            >
-              Search
-            </button>
-            <button
-              type="button"
-              onClick={handleSearchByCurrentLocation}
-              disabled={locationSearching}
-              className="w-full rounded-xl border border-white/60 px-5 py-3 font-semibold text-white transition hover:bg-white/15 disabled:opacity-70 md:w-auto"
-            >
-              {locationSearching ? "Detecting GPS..." : "Search by Current GPS"}
-            </button>
+            <div className="flex w-full flex-col gap-3 md:flex-row md:items-center">
+              <select
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                className="w-full rounded-xl border border-white/60 bg-white px-4 py-3 text-gray-900 shadow md:flex-1"
+              >
+                <option value="">All Services</option>
+                {services.map((service) => (
+                  <option key={service.value} value={service.value}>
+                    {service.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleSearch}
+                className="btn-glow w-full rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 md:w-auto"
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={handleSearchByCurrentLocation}
+                disabled={locationSearching}
+                className="w-full rounded-xl border border-white/60 px-5 py-3 font-semibold text-white transition hover:bg-white/15 disabled:opacity-70 md:w-auto"
+              >
+                {locationSearching ? "Detecting GPS..." : "Search by Current GPS"}
+              </button>
+            </div>
           </div>
           {locationError && (
             <p className="mt-3 rounded-lg bg-amber-100/20 px-3 py-2 text-sm text-amber-100">{locationError}</p>
@@ -391,13 +319,16 @@ function Home() {
                 />
               </div>
               <div className="col-span-1">
-                <label className="block text-sm font-semibold text-slate-700">City</label>
-                <input
-                  type="text"
-                  className="mt-2 w-full border border-slate-200 rounded-lg px-3 py-2"
-                  value={testimonialForm.city}
-                  onChange={(e) => handleTestimonialChange("city", e.target.value)}
-                />
+                <label className="block text-sm font-semibold text-slate-700">Location</label>
+                <div className="mt-2">
+                  <LocationPartsInput
+                    value={testimonialForm.city}
+                    onChange={(combinedLocation) => handleTestimonialChange("city", combinedLocation)}
+                    showLabels={false}
+                    required
+                    wrapperClassName="grid gap-2 sm:grid-cols-1 lg:grid-cols-3"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700">I’m a</label>
@@ -469,7 +400,7 @@ function Home() {
               <button
                 key={item.value}
                 onClick={() =>
-                  navigate(`/search?city=${encodeURIComponent(city || "Bengaluru")}&service=${encodeURIComponent(item.value)}`)
+                  navigate(`/search?city=${encodeURIComponent(normalizeCityStateCountry(city) || "Bengaluru, Karnataka, India")}&service=${encodeURIComponent(item.value)}`)
                 }
                 className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-left text-sm transition hover:-translate-y-0.5 hover:bg-primary/10"
               >

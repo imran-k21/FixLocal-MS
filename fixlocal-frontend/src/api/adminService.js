@@ -18,6 +18,7 @@ export const adminService = {
   updateDispute: (id, data) => axios.put(`/disputes/${id}`, data),
   blockUser: (userId) => axios.put(`/admin/users/${userId}/block`),
   unblockUser: (userId) => axios.put(`/admin/users/${userId}/unblock`),
+  deleteUser: (userId) => axios.delete(`/admin/users/${userId}`),
   addDisputeNote: (id, payload) => axios.post(`/disputes/${id}/messages`, payload),
 };
 

@@ -12,6 +12,7 @@ import com.fixlocal.entity.ServiceOffering;
 import com.fixlocal.enums.Status;
 import com.fixlocal.entity.User;
 import com.fixlocal.repository.UserRepository;
+import com.fixlocal.util.LocationFormatUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,10 @@ public class UserServiceImpl implements UserService {
 
         User user = findByEmailOrThrow(email);
 
+        String normalizedWorkingCity = LocationFormatUtil.normalizeCityStateCountry(request.getWorkingCity());
+
         user.setName(request.getName());
-        user.setWorkingCity(request.getWorkingCity());
+        user.setWorkingCity(normalizedWorkingCity);
         user.setBio(request.getBio());
         user.setPhone(request.getPhone());
 

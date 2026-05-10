@@ -60,6 +60,10 @@ public class AdminServiceImpl implements AdminService {
         restTemplate.put(userServiceBaseUrl + "/internal/users/{id}/unblock", null, id);
     }
 
+    public void deleteUser(String id) {
+        restTemplate.delete(userServiceBaseUrl + "/internal/users/{id}", id);
+    }
+
     public void verifyTradesperson(String id) {
         restTemplate.put(userServiceBaseUrl + "/internal/users/{id}/verify", null, id);
     }

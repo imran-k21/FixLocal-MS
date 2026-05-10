@@ -33,6 +33,7 @@ public interface UserService {
     public Page<UserResponseDTO> getAdminUsers(Role role, Pageable pageable, String search);
     public void blockUserInternal(String userId);
     public void unblockUserInternal(String userId);
+    public void deleteUserInternal(String userId);
     public void verifyTradespersonInternal(String userId);
     public InternalAdminUserStatsDTO getAdminUserStats();
     public UserResponseDTO getMyProfile(String email);

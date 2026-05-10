@@ -32,6 +32,9 @@ function BookingCard({
   quoteSubmitLabel = "Set Price",
   quoteSubmittingLabel = "Saving...",
   quotePlaceholder = "Enter amount",
+  quoteAcceptLabel,
+  onQuoteAccept,
+  quoteAccepting = false,
   offerNotice,
   onDispute,
   onDownloadReceipt,
@@ -69,7 +72,8 @@ function BookingCard({
   const contactDetails = [
     booking.userName && `Customer: ${booking.userName}`,
     booking.userPhone && `Phone: ${booking.userPhone}`,
-    booking.userCity && `Address: ${booking.userCity}`,
+    booking.serviceAddress && `Service address: ${booking.serviceAddress}`,
+    booking.userCity && `City: ${booking.userCity}`,
   ].filter(Boolean);
   const timeline = [
     { label: "Accepted", value: booking.acceptedAt },
@@ -124,6 +128,16 @@ function BookingCard({
           >
             {quoteSubmitting ? quoteSubmittingLabel : quoteSubmitLabel}
           </button>
+          {onQuoteAccept && quoteAcceptLabel && (
+            <button
+              type="button"
+              className="w-full rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 disabled:opacity-60 sm:w-auto"
+              onClick={() => onQuoteAccept(booking)}
+              disabled={quoteAccepting}
+            >
+              {quoteAcceptLabel}
+            </button>
+          )}
         </div>
       )}
       {offerNotice && (

@@ -14,6 +14,7 @@ import com.fixlocal.entity.ServiceOffering;
 import com.fixlocal.enums.Status;
 import com.fixlocal.entity.User;
 import com.fixlocal.repository.UserRepository;
+import com.fixlocal.util.LocationFormatUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -113,6 +114,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    public void deleteUserInternal(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() == Role.ADMIN) {
+            throw new UserException(ErrorCode.ADMIN_DELETE_FORBIDDEN);
+        }
+
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
     public void verifyTradespersonInternal(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
@@ -154,8 +167,10 @@ public class UserServiceImpl implements UserService {
 
         User user = findByEmailOrThrow(email);
 
+        String normalizedWorkingCity = LocationFormatUtil.normalizeCityStateCountry(request.getWorkingCity());
+
         user.setName(request.getName());
-        user.setWorkingCity(request.getWorkingCity());
+        user.setWorkingCity(normalizedWorkingCity);
         user.setBio(request.getBio());
         user.setPhone(request.getPhone());
 

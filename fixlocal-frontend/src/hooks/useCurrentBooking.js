@@ -4,6 +4,8 @@ import { useLiveLocation } from "./useLiveLocation";
 import chatService from "../api/chatService";
 import { useAuth } from "../context/AuthContext";
 
+const ACTIVE_BOOKING_STATUSES = ["EN_ROUTE", "ARRIVED", "ACCEPTED", "PENDING"];
+
 export function useCurrentBooking() {
   const bookingsData = useBookingsData();
   const { user } = useAuth();
@@ -15,7 +17,7 @@ export function useCurrentBooking() {
   const activeBooking = useMemo(
     () =>
       bookingsData.bookings.find((booking) =>
-        ["EN_ROUTE", "ARRIVED", "ACCEPTED", "PENDING"].includes(booking.status)
+        ACTIVE_BOOKING_STATUSES.includes(booking.status)
       ) || null,
     [bookingsData.bookings]
   );
@@ -88,6 +90,30 @@ export function useCurrentBooking() {
       loadConversation(activeBooking.id);
     }
   }, [activeBooking?.id, loadConversation]);
+
+  useEffect(() => {
+    if (activeBooking?.id) {
+      return undefined;
+    }
+
+    setChatConversation(null);
+    setChatMessages([]);
+    return undefined;
+  }, [activeBooking?.id]);
+
+  useEffect(() => {
+    if (!activeBooking?.id) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      bookingsData.refresh();
+    }, 8000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [activeBooking?.id, bookingsData.refresh]);
 
   return {
     ...bookingsData,

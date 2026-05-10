@@ -8,6 +8,7 @@ com\fixlocal\enums\PaymentStatus.class
 com\fixlocal\enums\Status.class
 com\fixlocal\exception\BookingException.class
 com\fixlocal\entity\User$UserBuilder.class
+com\fixlocal\util\LocationFormatUtil.class
 com\fixlocal\enums\CancellationBy.class
 com\fixlocal\enums\BookingStatus.class
 com\fixlocal\exception\ErrorCode.class

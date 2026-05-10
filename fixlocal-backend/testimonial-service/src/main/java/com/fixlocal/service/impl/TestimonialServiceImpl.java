@@ -12,6 +12,7 @@ import com.fixlocal.entity.Testimonial;
 import com.fixlocal.exception.ErrorCode;
 import com.fixlocal.exception.TestimonialException;
 import com.fixlocal.repository.TestimonialRepository;
+import com.fixlocal.util.LocationFormatUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,7 @@ public class TestimonialServiceImpl implements TestimonialService {
 
         Testimonial testimonial = Testimonial.create(
                 request.getName(),
-                request.getCity(),
+                LocationFormatUtil.normalizeCityStateCountry(request.getCity()),
                 request.getRole(),
                 request.getQuote()
         );

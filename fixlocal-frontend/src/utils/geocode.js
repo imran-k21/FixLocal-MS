@@ -1,3 +1,4 @@
+import { buildCityStateCountry } from "./locationFormat";
 const NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/reverse";
 
 export async function reverseGeocodeCity(latitude, longitude) {
@@ -23,5 +24,13 @@ export async function reverseGeocodeCity(latitude, longitude) {
   }
 
   const data = await response.json();
-  return data?.address?.city || data?.address?.town || data?.address?.village || data?.address?.county || "";
+  const city =
+    data?.address?.city ||
+    data?.address?.town ||
+    data?.address?.village ||
+    data?.address?.hamlet ||
+    "";
+  const state = data?.address?.state || data?.address?.state_district || data?.address?.county || "";
+  const country = data?.address?.country || "";
+  return buildCityStateCountry(city, state, country);
 }

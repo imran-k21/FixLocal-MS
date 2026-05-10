@@ -21,9 +21,10 @@ public enum ErrorCode {
 
     INVALID_RATING_RANGE(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5"),
     TARGET_NOT_TRADESPERSON(HttpStatus.BAD_REQUEST, "Target user is not a tradesperson"),
-    CITY_REQUIRED(HttpStatus.BAD_REQUEST, "City is required"),
+    CITY_REQUIRED(HttpStatus.BAD_REQUEST, "Location is required in format: City, State, Country"),
 
     ADMIN_BLOCK_FORBIDDEN(HttpStatus.FORBIDDEN, "Cannot block admin"),
+    ADMIN_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "Cannot delete admin"),
     TRADESPERSON_ROLE_REQUIRED(HttpStatus.FORBIDDEN, "Only tradespersons can manage service offerings and skill tags");
 
     private final HttpStatus httpStatus;

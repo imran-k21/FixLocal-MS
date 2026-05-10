@@ -49,6 +49,7 @@ function TradespersonDashboard() {
   const [chatVisible, setChatVisible] = useState(false);
   const [quoteValues, setQuoteValues] = useState({});
   const [quoteSubmittingByBooking, setQuoteSubmittingByBooking] = useState({});
+  const [quoteAcceptingByBooking, setQuoteAcceptingByBooking] = useState({});
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -98,8 +99,23 @@ function TradespersonDashboard() {
         if (action === "START") await bookingService.startTrip(booking.id);
         if (action === "ARRIVED") await bookingService.markArrived(booking.id);
         if (action === "COMPLETE") await bookingService.complete(booking.id);
-        setActionNotice("Booking updated.");
-        fetchBookings();
+
+        if (action === "ACCEPT") {
+          setActionNotice("Booking accepted. Showing accepted bookings.");
+          setFilter("ACCEPTED");
+        } else if (action === "START") {
+          setActionNotice("Trip started. Showing en-route bookings.");
+          setFilter("EN_ROUTE");
+        } else if (action === "ARRIVED") {
+          setActionNotice("Marked as arrived. Showing arrived bookings.");
+          setFilter("ARRIVED");
+        } else if (action === "COMPLETE") {
+          setActionNotice("Booking completed. Showing completed bookings.");
+          setFilter("COMPLETED");
+        } else {
+          setActionNotice("Booking updated.");
+          fetchBookings();
+        }
       } catch (err) {
         setActionNotice("Action failed. Please retry.");
       }
@@ -139,6 +155,43 @@ function TradespersonDashboard() {
       }
     },
     [quoteValues, fetchBookings]
+  );
+
+  const getLatestOpenOffer = useCallback((booking) => {
+    const offers = (booking?.offerHistory || []).slice().reverse();
+    return offers.find((offer) => !offer?.accepted) || null;
+  }, []);
+
+  const canTradespersonAcceptOffer = useCallback(
+    (booking) => {
+      if (!booking || booking.status !== "PENDING") return false;
+      if (booking.awaitingResponseFrom !== "TRADESPERSON") return false;
+      const latest = getLatestOpenOffer(booking);
+      return Boolean(latest?.id && latest?.offeredBy === "USER");
+    },
+    [getLatestOpenOffer]
+  );
+
+  const handleAcceptUserOffer = useCallback(
+    async (booking) => {
+      if (!booking) return;
+      if (quoteAcceptingByBooking[booking.id]) return;
+
+      const latest = getLatestOpenOffer(booking);
+      if (!latest?.id) return;
+
+      setQuoteAcceptingByBooking((prev) => ({ ...prev, [booking.id]: true }));
+      try {
+        await bookingService.acceptOffer(booking.id, latest.id);
+        setActionNotice(`User offer accepted at ₹${latest.amount}.`);
+        fetchBookings();
+      } catch (err) {
+        setActionNotice(err?.response?.data?.message || "Failed to accept offered amount.");
+      } finally {
+        setQuoteAcceptingByBooking((prev) => ({ ...prev, [booking.id]: false }));
+      }
+    },
+    [fetchBookings, getLatestOpenOffer, quoteAcceptingByBooking]
   );
 
   const handleCancelBooking = useCallback(
@@ -305,6 +358,8 @@ function TradespersonDashboard() {
             {filteredBookings.map((booking) => {
               const actionConfig = getActionConfig(booking.status);
               const canCancel = USER_CANCELABLE_STATUSES.has(booking.status);
+              const latestOpenOffer = getLatestOpenOffer(booking);
+              const canAcceptUserOffer = canTradespersonAcceptOffer(booking);
               return (
                 <BookingCard
                   key={booking.id}
@@ -340,6 +395,15 @@ function TradespersonDashboard() {
                   onQuoteChange={handleQuoteChange}
                   onQuoteSubmit={handleQuoteSubmit}
                   quoteSubmitting={Boolean(quoteSubmittingByBooking[booking.id])}
+                  onQuoteAccept={canAcceptUserOffer ? handleAcceptUserOffer : undefined}
+                  quoteAcceptLabel={
+                    canAcceptUserOffer
+                      ? quoteAcceptingByBooking[booking.id]
+                        ? "Accepting..."
+                        : `Accept ₹${latestOpenOffer?.amount ?? ""}`
+                      : undefined
+                  }
+                  quoteAccepting={Boolean(quoteAcceptingByBooking[booking.id])}
                   showCustomerDetails
                   onDispute={async (payload) =>
                     disputeService.create({

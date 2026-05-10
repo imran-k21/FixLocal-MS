@@ -18,6 +18,7 @@ public interface AdminService {
     public Map<String, Object> getUsers(String role, int page, int size, String search);
     public void blockUser(String id);
     public void unblockUser(String id);
+    public void deleteUser(String id);
     public void verifyTradesperson(String id);
     public Map<String, Object> getBookings(int page, int size);
     public AdminStatsDTO getStats();

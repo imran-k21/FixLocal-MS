@@ -68,6 +68,12 @@ function Login() {
             {loading ? "Signing in..." : "Login"}
           </button>
         </form>
+        <p className="mt-4 text-center text-sm text-slate-600">
+          New to FixLocal?{" "}
+          <Link to="/register" className="font-semibold text-primary hover:underline">
+            Register here
+          </Link>
+        </p>
       </div>
     </div>
   );

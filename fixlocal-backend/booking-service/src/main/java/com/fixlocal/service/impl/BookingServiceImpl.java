@@ -8,6 +8,7 @@ import com.fixlocal.entity.*;
 import com.fixlocal.enums.*;
 import com.fixlocal.repository.BookingRepository;
 import com.fixlocal.repository.UserRepository;
+import com.fixlocal.util.LocationFormatUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +108,8 @@ public class BookingServiceImpl implements BookingService {
             throw new BookingException(ErrorCode.PENDING_BOOKING_EXISTS);
         }
 
+        String normalizedUserCity = LocationFormatUtil.normalizeCityStateCountry(request.getUserCity());
+
         Booking booking = Booking.builder()
                 .userId(user.getId())
                 .tradespersonId(tradespersonId)
@@ -114,7 +117,7 @@ public class BookingServiceImpl implements BookingService {
                 .serviceDescription(request.getServiceDescription())
                 .userName(user.getName())
                 .userPhone(user.getPhone())
-                .userCity(request.getUserCity())
+                .userCity(normalizedUserCity)
                 .userLatitude(request.getUserLatitude())
                 .userLongitude(request.getUserLongitude())
                 .price(request.getOfferAmount())

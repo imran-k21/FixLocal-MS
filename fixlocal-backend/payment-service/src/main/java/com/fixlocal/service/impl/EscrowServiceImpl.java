@@ -299,11 +299,39 @@ public class EscrowServiceImpl implements EscrowService {
     }
 
     private String extractPaymentId(String paymentIntentId) {
-        if (paymentIntentId == null) return null;
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            return null;
+        }
+
+        String normalizedIntent = paymentIntentId.trim();
+        String extractedPaymentId = null;
+
         String marker = "|" + PAYMENT_PREFIX;
-        int markerIndex = paymentIntentId.indexOf(marker);
-        if (markerIndex < 0) return null;
-        return paymentIntentId.substring(markerIndex + marker.length());
+        int markerIndex = normalizedIntent.indexOf(marker);
+        if (markerIndex >= 0) {
+            extractedPaymentId = normalizedIntent.substring(markerIndex + marker.length());
+        } else if (normalizedIntent.startsWith(PAYMENT_PREFIX)) {
+            extractedPaymentId = normalizedIntent.substring(PAYMENT_PREFIX.length());
+        } else if (normalizedIntent.startsWith("pay_")) {
+            extractedPaymentId = normalizedIntent;
+        }
+
+        if (extractedPaymentId == null || extractedPaymentId.isBlank()) {
+            return null;
+        }
+
+        int nextPipeIndex = extractedPaymentId.indexOf('|');
+        if (nextPipeIndex >= 0) {
+            extractedPaymentId = extractedPaymentId.substring(0, nextPipeIndex);
+        }
+
+        int firstSpaceIndex = extractedPaymentId.indexOf(' ');
+        if (firstSpaceIndex >= 0) {
+            extractedPaymentId = extractedPaymentId.substring(0, firstSpaceIndex);
+        }
+
+        extractedPaymentId = extractedPaymentId.trim();
+        return extractedPaymentId.isBlank() ? null : extractedPaymentId;
     }
 
     private long toPaise(Double amount) {

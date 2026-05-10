@@ -17,9 +17,9 @@ function Footer() {
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-wide text-cyan-200">Discover</h4>
           <ul className="mt-3 space-y-2 text-sm text-white/80">
-            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru&service=Electrician">Electricians</Link></li>
-            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru&service=Plumber">Plumbers</Link></li>
-            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru&service=Cleaning">Cleaning pros</Link></li>
+            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru,%20Karnataka,%20India&service=Electrician">Electricians</Link></li>
+            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru,%20Karnataka,%20India&service=Plumber">Plumbers</Link></li>
+            <li><Link className="transition hover:text-white" to="/search?city=Bengaluru,%20Karnataka,%20India&service=Cleaning">Cleaning pros</Link></li>
           </ul>
         </div>
         <div>

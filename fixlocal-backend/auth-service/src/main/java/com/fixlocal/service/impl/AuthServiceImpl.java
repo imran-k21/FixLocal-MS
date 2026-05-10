@@ -9,6 +9,7 @@ import com.fixlocal.repository.UserRepository;
 import com.fixlocal.security.JwtService;
 import com.fixlocal.security.PayloadEncryptionService;
 import com.fixlocal.exception.*;
+import com.fixlocal.util.LocationFormatUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,11 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
+        String normalizedWorkingCity = null;
+        if (request.getWorkingCity() != null && !request.getWorkingCity().isBlank()) {
+            normalizedWorkingCity = LocationFormatUtil.normalizeCityStateCountry(request.getWorkingCity());
+        }
+
         User user = User.builder()
                 .name(request.getName())
                 .email(email)
@@ -66,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
                 .phone(request.getPhone())
                 .role(request.getRole())
                 .occupation(request.getOccupation())
-                .workingCity(request.getWorkingCity())
+                .workingCity(normalizedWorkingCity)
                 .experience(request.getExperience() != null ? request.getExperience() : 0)
                 .status(request.getRole() == Role.TRADESPERSON ? Status.AVAILABLE : null)
                 .createdAt(LocalDateTime.now())

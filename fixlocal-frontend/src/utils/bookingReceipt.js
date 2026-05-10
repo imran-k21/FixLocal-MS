@@ -61,6 +61,7 @@ const buildReceiptMarkup = (booking) => {
   const customerRows = toRows([
     { label: "Customer Name", value: booking?.userName },
     { label: "Customer Phone", value: booking?.userPhone },
+    { label: "Service Address", value: booking?.serviceAddress },
     { label: "Customer City", value: booking?.userCity },
     {
       label: "Customer Coordinates",

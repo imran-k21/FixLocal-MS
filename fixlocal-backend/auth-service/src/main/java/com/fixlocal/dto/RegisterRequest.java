@@ -39,7 +39,8 @@ public class RegisterRequest {
     @Size(max = 100, message = "Occupation too long")
     private String occupation;
 
-    @Size(max = 100, message = "Working city too long")
+    @Size(max = 150, message = "Working location too long")
+    @Pattern(regexp = "^[^,]+,\\s*[^,]+,\\s*[^,]+$", message = "Use format: City, State, Country")
     private String workingCity;
 
     @Min(value = 0, message = "Experience cannot be negative")

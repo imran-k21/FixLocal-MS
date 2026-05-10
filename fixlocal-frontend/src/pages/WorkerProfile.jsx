@@ -4,6 +4,9 @@ import api from "../api/axios";
 import { bookingService } from "../api/bookingService";
 import { useAuth } from "../context/AuthContext";
 import { formatPhoneForDisplay } from "../utils/phone";
+import { formatPersonName } from "../utils/nameFormat";
+import { buildCityStateCountry, isValidCityStateCountry, normalizeCityStateCountry } from "../utils/locationFormat";
+import { reverseGeocodeCity } from "../utils/geocode";
 
 function WorkerProfile() {
   const { id } = useParams();
@@ -14,6 +17,7 @@ function WorkerProfile() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [address, setAddress] = useState("");
+  const [resolvedUserCity, setResolvedUserCity] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [fetchingSuggestions, setFetchingSuggestions] = useState(false);
@@ -94,6 +98,41 @@ function WorkerProfile() {
     return Number.isFinite(num) ? num : null;
   };
 
+  const buildAddressLabel = (properties = {}) => {
+    const streetLine = [properties.housenumber, properties.street]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    const parts = [
+      properties.name,
+      streetLine,
+      properties.district,
+      properties.city,
+      properties.state,
+      properties.country,
+    ]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(parts)).join(", ");
+  };
+
+  const buildUserCityFromSuggestion = (properties = {}) => {
+    const city =
+      properties.city ||
+      properties.locality ||
+      properties.town ||
+      properties.village ||
+      properties.county ||
+      "";
+    const state = properties.state || properties.region || properties.county || "";
+    const country = properties.country || "";
+
+    return buildCityStateCountry(city, state, country);
+  };
+
   // load address suggestions when typing
   useEffect(() => {
     if (!address || address.trim().length < 3) {
@@ -147,6 +186,10 @@ function WorkerProfile() {
   }, [address]);
 
   const handleBook = async () => {
+    if (submitting) {
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate("/login", { state: { redirectTo: `/worker/${id}` } });
       return;
@@ -156,7 +199,7 @@ function WorkerProfile() {
       return;
     }
     if (!address.trim()) {
-      setError("Please provide your address before booking.");
+      setError("Please provide your location before booking.");
       return;
     }
 
@@ -166,13 +209,16 @@ function WorkerProfile() {
       return;
     }
 
+    const normalizedServiceAddress = address.trim();
+    let normalizedUserCity = normalizeCityStateCountry(resolvedUserCity || "");
+
     let lat = parseCoord(coords.lat);
     let lng = parseCoord(coords.lng);
 
-    if ((lat === null || lng === null) && address.trim().length >= 3) {
+    if ((lat === null || lng === null || !isValidCityStateCountry(normalizedUserCity)) && normalizedServiceAddress.length >= 3) {
       try {
         const searchParams = new URLSearchParams({
-          q: address,
+          q: normalizedServiceAddress,
           lang: "en",
           limit: "1",
         });
@@ -186,9 +232,41 @@ function WorkerProfile() {
             setCoords({ lat: lat.toFixed(5), lng: lng.toFixed(5) });
           }
         }
+
+        if (!isValidCityStateCountry(normalizedUserCity)) {
+          const bestMatchCity = buildUserCityFromSuggestion(bestMatch?.properties || {});
+          if (isValidCityStateCountry(bestMatchCity)) {
+            normalizedUserCity = bestMatchCity;
+            setResolvedUserCity(bestMatchCity);
+          }
+        }
       } catch (geoErr) {
         console.warn("Fallback geocode failed", geoErr);
       }
+    }
+
+    if (!isValidCityStateCountry(normalizedUserCity)) {
+      const fromAddress = normalizeCityStateCountry(normalizedServiceAddress);
+      if (isValidCityStateCountry(fromAddress)) {
+        normalizedUserCity = fromAddress;
+      }
+    }
+
+    if (!isValidCityStateCountry(normalizedUserCity) && lat !== null && lng !== null) {
+      try {
+        const fromGps = normalizeCityStateCountry(await reverseGeocodeCity(lat, lng));
+        if (isValidCityStateCountry(fromGps)) {
+          normalizedUserCity = fromGps;
+          setResolvedUserCity(fromGps);
+        }
+      } catch (reverseErr) {
+        console.warn("Reverse geocode for city failed", reverseErr);
+      }
+    }
+
+    if (!isValidCityStateCountry(normalizedUserCity)) {
+      setError("Please choose a location suggestion so city, state, and country are captured.");
+      return;
     }
 
     if (lat === null || lng === null) {
@@ -204,17 +282,25 @@ function WorkerProfile() {
       const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
       await bookingService.create({
         tradespersonId: id,
-        serviceAddress: worker?.workingCity || "Customer location",
+        serviceAddress: normalizedServiceAddress,
         serviceDescription: `Booking with ${worker?.name || "tradesperson"}`,
         bookingStartTime: start.toISOString(),
         bookingEndTime: end.toISOString(),
         offerAmount: parsedOfferAmount,
-        userCity: address,
+        userCity: normalizedUserCity,
         userLatitude: lat,
         userLongitude: lng,
       });
       setSuccess("Booking request sent! You can track it from your dashboard.");
     } catch (err) {
+      const errorCode = err?.response?.data?.code;
+      if (errorCode === "PENDING_BOOKING_EXISTS") {
+        setError(
+          "You already have a pending request with this tradesperson. Please check your dashboard/current booking."
+        );
+        return;
+      }
+
       setError(err?.response?.data?.message || "Failed to create booking.");
     } finally {
       setSubmitting(false);
@@ -226,6 +312,7 @@ function WorkerProfile() {
 
   const workerPhone =
     worker?.phone || worker?.mobile || worker?.mobileNumber || worker?.contactNumber;
+  const dialPhone = workerPhone ? String(workerPhone).replace(/[^\d+]/g, "") : "";
   const formattedPhone = workerPhone ? formatPhoneForDisplay(workerPhone) : "";
   const aiMatchScore = Number.isFinite(Number(worker?.aiMatchScore))
     ? Number(worker.aiMatchScore).toFixed(1)
@@ -239,6 +326,30 @@ function WorkerProfile() {
   const aiSuggestedMax = Number.isFinite(Number(worker?.aiSuggestedOfferMax))
     ? Number(worker.aiSuggestedOfferMax)
     : null;
+  const matchReason = worker?.aiMatchReason
+    ? worker.aiMatchReason.replace(/^AI match based on\s*/i, "Strong fit based on ")
+    : "";
+  const displayName = formatPersonName(worker?.name) || worker?.name || "Tradesperson";
+
+  const handleDial = (event) => {
+    event?.preventDefault?.();
+    if (!dialPhone) return;
+
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Windows Phone|Opera Mini|IEMobile/i.test(
+      navigator.userAgent
+    );
+
+    if (isMobileDevice) {
+      window.location.href = `tel:${dialPhone}`;
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(dialPhone).catch(() => {});
+    }
+
+    window.alert(`Dial this number: ${formattedPhone || dialPhone}`);
+  };
 
   return (
     <div className="py-12">
@@ -252,7 +363,7 @@ function WorkerProfile() {
           />
           <div className="flex flex-col gap-2">
             <p className="text-sm uppercase text-text-secondary">Tradesperson</p>
-            <h1 className="text-4xl font-bold text-text-primary">{worker.name}</h1>
+            <h1 className="text-4xl font-bold text-text-primary">{displayName}</h1>
             <p className="text-lg text-text-secondary">{worker.occupation}</p>
           </div>
           <dl className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-text-primary">
@@ -266,7 +377,18 @@ function WorkerProfile() {
             </div>
             <div>
               <dt className="text-sm text-text-secondary">Mobile</dt>
-              <dd className="text-base">📞 {formattedPhone || "Not provided"}</dd>
+              <dd className="text-base">
+                📞 {formattedPhone || "Not provided"}
+                {dialPhone && (
+                  <button
+                    type="button"
+                    onClick={handleDial}
+                    className="ml-2 inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    Call
+                  </button>
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-sm text-text-secondary">Rating</dt>
@@ -292,16 +414,16 @@ function WorkerProfile() {
 
           {(aiMatchScore || worker?.aiMatchReason || aiSuggestedOffer) && (
             <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-              <p className="text-sm font-semibold text-indigo-800">🤖 AI Match & Fair-Quote Copilot</p>
+              <p className="text-sm font-semibold text-indigo-800">Match Insights & Fair-Quote Guidance</p>
               {aiMatchScore && (
-                <p className="mt-1 text-sm text-indigo-700">Match score: {aiMatchScore}/100</p>
+                <p className="mt-1 text-sm text-indigo-700">Match confidence: {aiMatchScore}/100</p>
               )}
-              {worker?.aiMatchReason && (
-                <p className="mt-1 text-xs text-indigo-700/90">{worker.aiMatchReason}</p>
+              {matchReason && (
+                <p className="mt-1 text-xs text-indigo-700/90">{matchReason}</p>
               )}
               {aiSuggestedOffer && (
                 <p className="mt-2 text-sm text-emerald-700">
-                  Suggested fair offer: ₹{Math.round(aiSuggestedOffer)}
+                  Suggested budget range: ₹{Math.round(aiSuggestedOffer)}
                   {aiSuggestedMin && aiSuggestedMax
                     ? ` (range ₹${Math.round(aiSuggestedMin)} - ₹${Math.round(aiSuggestedMax)})`
                     : ""}
@@ -312,13 +434,16 @@ function WorkerProfile() {
 
           <div className="mt-6 grid gap-4">
             <div className="relative" ref={suggestionRef}>
-              <label className="text-sm text-text-secondary">Your address</label>
+              <label className="text-sm text-text-secondary">Your location</label>
               <input
                 type="text"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setResolvedUserCity("");
+                }}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
-                placeholder="Start typing your address"
+                placeholder="Enter full service address (house, street, area)"
                 className="mt-1 w-full border rounded-xl px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 autoComplete="off"
               />
@@ -339,10 +464,12 @@ function WorkerProfile() {
                           item.properties?.state,
                           item.properties?.country,
                         ].filter(Boolean);
-                        const fullAddress = [displayLabel, ...contextParts]
-                          .filter(Boolean)
-                          .join(", ");
+                        const fullAddress =
+                          buildAddressLabel(item.properties || {}) ||
+                          [displayLabel, ...contextParts].filter(Boolean).join(", ");
+                        const detectedUserCity = buildUserCityFromSuggestion(item.properties || {});
                         setAddress(fullAddress || address);
+                        setResolvedUserCity(detectedUserCity || "");
                         if (item.geometry?.coordinates?.length === 2) {
                           setCoords({
                             lat: Number(item.geometry.coordinates[1]).toFixed(5),
@@ -370,6 +497,9 @@ function WorkerProfile() {
                 <div className="absolute right-3 top-7 text-slate-400 text-xs">
                   Searching…
                 </div>
+              )}
+              {resolvedUserCity && (
+                <p className="mt-1 text-xs text-emerald-600">Selected city: {resolvedUserCity}</p>
               )}
             </div>
             <div className="space-y-3">
@@ -431,7 +561,7 @@ function WorkerProfile() {
                     onClick={() => setOfferAmount(String(Math.round(aiSuggestedOffer)))}
                     className="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
                   >
-                    Use AI suggestion
+                    Use suggested amount
                   </button>
                 )}
               </div>

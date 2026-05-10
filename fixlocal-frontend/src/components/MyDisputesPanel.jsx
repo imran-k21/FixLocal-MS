@@ -59,7 +59,7 @@ function DisputeCard({ dispute, onSelect }) {
       </div>
       {dispute.aiTriage && (
         <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-1">
-          <p className="text-[11px] uppercase text-violet-700 font-semibold">AI Triage</p>
+          <p className="text-[11px] uppercase text-violet-700 font-semibold">Priority Triage</p>
           <p className="text-xs text-slate-700 line-clamp-3">{dispute.aiTriage.summary}</p>
           <div className="text-[11px] text-slate-600">
             Urgency: <span className="font-semibold">{dispute.aiTriage.urgencyScore ?? "-"}/100</span>

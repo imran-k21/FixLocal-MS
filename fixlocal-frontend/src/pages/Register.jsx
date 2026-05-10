@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import "react-phone-input-2/lib/style.css";
 import PhoneInput from "react-phone-input-2";
 import { services } from "./Home";
+import LocationPartsInput from "../components/LocationPartsInput";
 import { encryptAuthFields } from "../utils/authEncryption";
+import { isValidCityStateCountry, normalizeCityStateCountry } from "../utils/locationFormat";
 const roles = [
   { value: "USER", label: "Customer" },
   { value: "TRADESPERSON", label: "Tradesperson" },
@@ -26,12 +28,6 @@ function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [allCities, setAllCities] = useState([]);
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const cityDropdownRef = useRef(null);
-  const [isCityLoading, setIsCityLoading] = useState(false);
-  const cityOptions = useMemo(() => allCities, [allCities]);
   const occupationOptions = useMemo(() => (services || []).map((item) => ({
     value: item.value,
     label: item.label,
@@ -43,75 +39,6 @@ function Register() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    async function fetchCities() {
-      try {
-        setIsCityLoading(true);
-        const response = await fetch("https://countriesnow.space/api/v0.1/countries/cities", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ country: "India" }),
-          signal: controller.signal,
-        });
-        const payload = await response.json();
-        if (!cancelled && payload?.data) {
-          const uniqueCities = Array.from(new Set(payload.data)).sort((a, b) => a.localeCompare(b));
-          setAllCities(uniqueCities);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.warn("Failed to load city list", err);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsCityLoading(false);
-        }
-      }
-    }
-
-    fetchCities();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target)) {
-        setShowSuggestions(false);
-      }
-    }
-
-    if (showSuggestions) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showSuggestions]);
-
-  const handleCityInput = (value) => {
-    setForm((prev) => ({ ...prev, workingCity: value }));
-    if (!value.trim()) {
-      setCitySuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    const prefix = value.toLowerCase();
-    const matches = allCities.filter((city) => city.toLowerCase().startsWith(prefix));
-    setCitySuggestions(matches);
-    setShowSuggestions(matches.length > 0);
-  };
-
-  const handleSelectWorkingCity = (value) => {
-    setForm((prev) => ({ ...prev, workingCity: value }));
-    setShowSuggestions(false);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -120,8 +47,15 @@ function Register() {
       const payload = {
         ...form,
         phone: form.phone,
+        workingCity: normalizeCityStateCountry(form.workingCity),
         experience: form.experience ? Number(form.experience) : undefined,
       };
+
+      if (isTradesperson && !isValidCityStateCountry(payload.workingCity)) {
+        setError("Working location must be in format: City, State, Country");
+        setLoading(false);
+        return;
+      }
 
       if (!isTradesperson) {
         delete payload.workingCity;
@@ -213,46 +147,18 @@ function Register() {
           </label>
           {isTradesperson && (
             <>
-              <div className="relative flex flex-col text-sm" ref={cityDropdownRef}>
+              <div className="flex flex-col text-sm md:col-span-2">
                 <span className="text-text-secondary mb-1">City</span>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    name="workingCity"
-                    value={form.workingCity}
-                    onChange={(e) => handleCityInput(e.target.value)}
-                    onFocus={() => form.workingCity && setShowSuggestions(citySuggestions.length > 0)}
-                    placeholder="Enter your city"
-                    autoComplete="off"
-                    className="w-full rounded-xl border border-slate-200 bg-white/90 p-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSuggestions((prev) => !prev)}
-                    className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-700 transition hover:-translate-y-0.5 hover:bg-white"
-                    disabled={isCityLoading || !cityOptions.length}
-                  >
-                    {isCityLoading ? "Loading" : "Browse"}
-                  </button>
-                </div>
-                {showSuggestions && cityOptions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                    {(form.workingCity ? citySuggestions : cityOptions).slice(0, 50).map((city) => (
-                      <button
-                        key={city}
-                        type="button"
-                        className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-                        onClick={() => handleSelectWorkingCity(city)}
-                      >
-                        {city}
-                      </button>
-                    ))}
-                    {!cityOptions.length && (
-                      <div className="px-4 py-2 text-sm text-slate-500">No matches</div>
-                    )}
-                  </div>
-                )}
+                <LocationPartsInput
+                  value={form.workingCity}
+                  onChange={(combinedLocation) =>
+                    setForm((prev) => ({ ...prev, workingCity: combinedLocation }))
+                  }
+                  showLabels={false}
+                  wrapperClassName="grid gap-2 sm:grid-cols-1 lg:grid-cols-3"
+                  inputClassName="w-full rounded-xl border border-slate-200 bg-white/90 p-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25"
+                  required
+                />
               </div>
               <label className="flex flex-col text-sm">
                 <span className="text-text-secondary mb-1">Primary service</span>
@@ -299,6 +205,12 @@ function Register() {
             </button>
           </div>
         </form>
+        <p className="mt-4 text-center text-sm text-slate-600">
+          Already have an account?{" "}
+          <Link to="/login" className="font-semibold text-primary hover:underline">
+            Login here
+          </Link>
+        </p>
       </div>
     </div>
   );

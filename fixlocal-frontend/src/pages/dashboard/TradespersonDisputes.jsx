@@ -53,7 +53,7 @@ function TradespersonDisputesPage() {
               {activeDispute.aiTriage && (
                 <div className="p-5 border-b border-slate-100 bg-violet-50/50 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase text-violet-700 font-semibold">AI Triage Copilot</p>
+                    <p className="text-xs uppercase text-violet-700 font-semibold">Priority Triage Assistant</p>
                     <span className="text-xs px-2 py-1 rounded-full bg-white border border-violet-200 text-violet-700">
                       Urgency {activeDispute.aiTriage.urgencyScore ?? "-"}/100
                     </span>

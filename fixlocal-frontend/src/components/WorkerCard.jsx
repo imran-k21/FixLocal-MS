@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { formatPhoneForDisplay } from "../utils/phone";
+import { formatPersonName } from "../utils/nameFormat";
 
 function WorkerCard({ worker }) {
 
   const navigate = useNavigate();
   const workerPhone =
     worker?.phone || worker?.mobile || worker?.mobileNumber || worker?.contactNumber;
+  const dialPhone = workerPhone ? String(workerPhone).replace(/[^\d+]/g, "") : "";
   const formattedPhone = workerPhone ? formatPhoneForDisplay(workerPhone) : "";
   const roundedRating = Number.isFinite(Number(worker.averageRating))
     ? Number(worker.averageRating).toFixed(1)
@@ -16,6 +18,31 @@ function WorkerCard({ worker }) {
   const aiSuggestedOffer = Number.isFinite(Number(worker?.aiSuggestedOffer))
     ? Number(worker.aiSuggestedOffer)
     : null;
+  const matchReason = worker?.aiMatchReason
+    ? worker.aiMatchReason.replace(/^AI match based on\s*/i, "Strong fit based on ")
+    : "";
+  const displayName = formatPersonName(worker?.name) || worker?.name || "Tradesperson";
+
+  const handleDial = (event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    if (!dialPhone) return;
+
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Windows Phone|Opera Mini|IEMobile/i.test(
+      navigator.userAgent
+    );
+
+    if (isMobileDevice) {
+      window.location.href = `tel:${dialPhone}`;
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(dialPhone).catch(() => {});
+    }
+
+    window.alert(`Dial this number: ${formattedPhone || dialPhone}`);
+  };
 
   return (
     <div className="lift-card hover-tilt gradient-border group relative overflow-hidden rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur sm:p-5">
@@ -31,7 +58,7 @@ function WorkerCard({ worker }) {
       />
 
       <h2 className="pr-20 text-lg font-bold text-text-primary sm:pr-24 sm:text-xl">
-        {worker.name}
+        {displayName}
       </h2>
 
       <p className="text-sm font-semibold text-gradient">{worker.occupation}</p>
@@ -44,21 +71,31 @@ function WorkerCard({ worker }) {
 
       {aiMatchScore && (
         <p className="mt-1 text-xs font-semibold text-indigo-700">
-          🤖 AI Match: {aiMatchScore}/100
+          Match confidence: {aiMatchScore}/100
         </p>
       )}
 
-      {worker?.aiMatchReason && (
-        <p className="mt-1 text-xs text-slate-500 line-clamp-2">{worker.aiMatchReason}</p>
+      {matchReason && (
+        <p className="mt-1 text-xs text-slate-500 line-clamp-2">{matchReason}</p>
       )}
 
       {aiSuggestedOffer && (
         <p className="mt-1 text-xs text-emerald-700">
-          💡 Fair offer: ₹{Math.round(worker.aiSuggestedOfferMin || aiSuggestedOffer)} - ₹{Math.round(worker.aiSuggestedOfferMax || aiSuggestedOffer)}
+          Suggested budget range: ₹{Math.round(worker.aiSuggestedOfferMin || aiSuggestedOffer)} - ₹{Math.round(worker.aiSuggestedOfferMax || aiSuggestedOffer)}
         </p>
       )}
 
       <p className="text-text-secondary">📞 {formattedPhone || "Not provided"}</p>
+
+      {dialPhone && (
+        <button
+          type="button"
+          onClick={handleDial}
+          className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+        >
+          Call Now
+        </button>
+      )}
 
       {/* ✅ Status Badge */}
       <span
